@@ -50,7 +50,7 @@ Implementation idea:
 - update `comp_low` during union
 
 Done when:
-- after unions, `find(a) == find(b)` if connected
+- after unions,`find(a) == find(b)` if connected
 - `comp_low[find(x)]` returns the lowest-valued vertex in the component
 
 ---
