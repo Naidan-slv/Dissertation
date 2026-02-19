@@ -1,0 +1,14 @@
+# created by virtualenv automatically
+.venv/bin
+
+# Environments
+.env
+.venv
+env/
+venv/
+
+# Pycharm
+.idea/
+
+.Python
+build/
