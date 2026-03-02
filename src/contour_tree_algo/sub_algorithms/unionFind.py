@@ -7,5 +7,5 @@
 - quickly merge two elements into the same set
 
 """
-class unionFind :
+class UnionFind :
     pass
