@@ -28,4 +28,10 @@ data = np.fromfile(raw_path, dtype=meta["dtype"])
 
 vol = data.reshape((d, h, w), order="C")
 
+expected_size = w * h * d
+if data.size != expected_size:
+    raise ValueError(
+        f"Size mismatch: expected {expected_size}, got {data.size}"
+    )
+
 print("Min:", vol.min(), "Max:", vol.max())
