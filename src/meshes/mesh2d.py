@@ -9,6 +9,9 @@ For now:
 
 from __future__ import annotations
 
+from collections import defaultdict
+# we use default dict since this creates a dictionary where missing keys
+# automatically create an empty set
 from typing import Dict, List, Tuple
 
 from src.meshes.mesh import Mesh
@@ -33,13 +36,34 @@ class TriMesh2D(Mesh):
         self._values = values
         # store triangle connectivity
         self._triangles = triangles
+        self._adj = defaultdict(set)
+
+        # Build adjacency from the triangle list
+        self._build_adjacency()
+
+    def _build_adjacency(self) -> None:
+        """
+        Build vertex adjacency from triangle connectivity.
+
+        For each triangle (a, b, c), we add the three undirected edges:
+            (a, b), (b, c), (c, a)
+
+        Using sets avoids duplicate neighbors when two triangles share an edge.
+        """
+        for a, b, c in self._triangles:
+            self._adj[a].update([b, c])
+            self._adj[b].update([a, c])
+            self._adj[c].update([a, b])
 
     def vertices(self) -> List[int]:
         return list(self._values.keys())
 
     def neighbors(self, v: int) -> List[int]:
-        # not implemented yet
-        raise NotImplementedError("neighbors() not implemented yet (Step 1)")
+        """
+        Return the neighboring vertices of v.
+        We convert the internal set to a sorted list so output is deterministic.
+        """
+        return sorted(self._adj[v])
 
     def value(self, v: int) -> float:
         return self._values[v]

@@ -52,6 +52,10 @@ if __name__ == "__main__":
         for tri in mesh.triangles():
             print(f"  {tri}")
 
+        print("\nAdjacency in mesh:")
+        for v in mesh.vertices():
+            print(f"  vertex {v} -> neighbors {mesh.neighbors(v)}")
+
         print("\nSorted vertices (ascending by value):")
         print(mesh.sorted_vertices())
 
