@@ -65,6 +65,15 @@ def saddle_mesh():
     return simple_meshes.saddle_mesh()
 
 
+@pytest.fixture
+def nested_hierarchy_mesh():
+    """
+    Mesh with hierarchical join structure.
+    Tests correct component tracking across multiple levels.
+    """
+    return simple_meshes.nested_hierarchy_mesh()
+
+
 # -----------------------------------------
 # Algorithm Fixtures
 # -----------------------------------------
