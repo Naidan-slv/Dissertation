@@ -49,7 +49,7 @@ def test_helper_verify_unionfind_invariants(empty_unionfind):
     
     # Add some elements
     for i in range(5):
-        empty_unionfind.make_set(i)
+        empty_unionfind.make_set(i, scalar_value=float(i))
     
     # Should not raise
     verify_unionfind_invariants(empty_unionfind, list(range(5)))
