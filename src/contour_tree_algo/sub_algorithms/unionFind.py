@@ -1,88 +1,202 @@
 """
 Union-Find (Disjoint Set Union)
 
-Uses:
-- Detect cycle in graph
-- Check network connectivity
-- Kruskal's MST algorithm
-- Efficiently manage disjoint sets
-- Quickly determine if two elements are in the same set
-- Quickly merge two sets into one
+Extended for use in contour tree construction.
 
-Current increment:
-- Add weighted union rule (union by size)
+Standard Union-Find operations:
+- make_set(x, value)
+- find(x)
+- union(a, b)
+
+Extended for Carr et al. join/split sweep:
+- lowest_in_component(x)
 
 Based on:
-- Tarjan (1975), weighted union rule
+- Tarjan, R.E. (1975). "Efficiency of a Good But Not Linear Set Union Algorithm."
+  Journal of the ACM, 22(2), 215-225.
+  → Provides the weighted union rule and find() structure.
+
+- Carr, H., Snoeyink, J., Axen, U. (2003).
+  "Computing Contour Trees in All Dimensions."
+  Computational Geometry, 24(3), 75-94.
+  → Algorithm 4.1 requires LowestVertex tracking per component.
+  → This is the 'comp_low' dictionary below.
 """
+
 
 class UnionFind:
     """
-    Basic Union-Find (Disjoint Set) structure.
+    Union-Find (Disjoint Set) structure extended for contour tree construction.
 
-    Implements:
-        make_set(x)
-        find(x)
-        union(a, b)
+    Each element represents a vertex in a mesh with a scalar value f(v).
 
-    This version adds the weighted union rule:
-    always attach the smaller tree under the larger tree.
+    Supports:
+        make_set(x, value)         -- create singleton set for vertex x
+        find(x)                    -- return root of component containing x
+        union(a, b)                -- merge components of a and b
+        lowest_in_component(x)     -- return vertex with lowest f(v) in component
+
+    Based on:
+        Tarjan (1975) -- weighted union rule
+        Carr et al. (2003) -- LowestVertex extension for Algorithm 4.1
     """
 
     def __init__(self):
+        # -----------------------------------------
+        # Internal state
+        # Based on: Tarjan (1975)
+        # -----------------------------------------
+
+        # parent[x] = the parent of x in the Union-Find forest
+        # if parent[x] == x, then x is the root of its component
         self.parent = {}
+
+        # size[root] = number of elements in the component rooted at root
+        # used for the weighted union rule (always attach smaller under larger)
         self.size = {}
 
-    def make_set(self, x):
+        # -----------------------------------------
+        # Extension for Carr et al. (2003) Algorithm 4.1
+        # -----------------------------------------
+
+        # comp_low[root] = the vertex with the LOWEST scalar value
+        # in the component rooted at root.
+        # This is the 'LowestVertex' array described in Carr et al. (2003).
+        self.comp_low = {}
+
+        # scalar values for each vertex — needed to compare during union
+        self.value = {}
+
+    # -----------------------------------------
+    # Step 1 — Create singleton set
+    # Based on: Tarjan (1975), make_set operation
+    # Extended by: Carr et al. (2003) to store scalar value and LowestVertex
+    # -----------------------------------------
+
+    def make_set(self, x, scalar_value):
         """
-        Create a new set containing element x.
+        Create a new singleton set containing only vertex x.
+
+        Args:
+            x:             vertex ID (integer)
+            scalar_value:  the scalar value f(x) at this vertex
         """
+        # x starts as its own parent (singleton component)
         self.parent[x] = x
+
+        # singleton component has size 1
         self.size[x] = 1
+
+        # store the scalar value so we can compare during union
+        self.value[x] = scalar_value
+
+        # the lowest vertex in a singleton is x itself
+        # (Carr et al. 2003: LowestVertex[i] := yi)
+        self.comp_low[x] = x
+
+    # -----------------------------------------
+    # Step 2 — Find root of component
+    # Based on: Tarjan (1975), FIND operation
+    # This version uses simple traversal (no path compression)
+    # to keep the algorithm transparent and traceable.
+    # -----------------------------------------
 
     def find(self, x):
         """
-        Find the root (representative) of the set containing x.
+        Find and return the root (representative) of the component containing x.
+
+        Follows parent pointers until we reach a root (where parent[x] == x).
+
+        Args:
+            x: vertex ID
+
+        Returns:
+            root vertex ID of the component containing x
         """
+        # walk up the parent chain until we reach the root
         while self.parent[x] != x:
             x = self.parent[x]
         return x
 
+    # -----------------------------------------
+    # Step 3 — Merge two components
+    # Based on: Tarjan (1975), weighted union rule
+    # Extended by: Carr et al. (2003) to maintain LowestVertex after merge
+    # -----------------------------------------
+
     def union(self, a, b):
         """
-        Merge the sets containing a and b using union by size.
+        Merge the components containing a and b.
+
+        Uses the weighted union rule (Tarjan 1975):
+            always attach the smaller component under the larger one.
+            This keeps the tree shallow and find() efficient.
+
+        Also updates comp_low (Carr et al. 2003):
+            after merging, the new component's lowest vertex is the
+            lower of the two components' lowest vertices.
+
+        Args:
+            a, b: vertex IDs to merge
+
+        Returns:
+            root of the merged component
         """
         rootA = self.find(a)
         rootB = self.find(b)
 
+        # already in the same component — nothing to do
         if rootA == rootB:
             return rootA
 
-        # Weighted union rule:
-        # attach the smaller tree under the larger tree
+        # -----------------------------------------
+        # Weighted union rule (Tarjan 1975):
+        # attach smaller tree under larger tree
+        # -----------------------------------------
         if self.size[rootA] < self.size[rootB]:
             rootA, rootB = rootB, rootA
 
+        # rootB becomes a child of rootA
         self.parent[rootB] = rootA
+
+        # update size of the merged component
         self.size[rootA] += self.size[rootB]
+
+        # -----------------------------------------
+        # Update LowestVertex after merge (Carr et al. 2003)
+        # The new lowest vertex is whichever of the two roots
+        # has the lower scalar value.
+        # -----------------------------------------
+        low_a = self.comp_low[rootA]
+        low_b = self.comp_low[rootB]
+
+        if self.value[low_a] <= self.value[low_b]:
+            self.comp_low[rootA] = low_a
+        else:
+            self.comp_low[rootA] = low_b
 
         return rootA
 
+    # -----------------------------------------
+    # Step 4 — Query lowest vertex in component
+    # Based on: Carr et al. (2003), Algorithm 4.1
+    # "LowestVertex[Component[j]]"
+    # -----------------------------------------
 
-if __name__ == "__main__":
-    uf = UnionFind()
+    def lowest_in_component(self, x):
+        """
+        Return the vertex with the lowest scalar value in the component
+        containing x.
 
-    for i in range(5):
-        uf.make_set(i)
+        This is the 'LowestVertex' lookup described in Carr et al. (2003)
+        Algorithm 4.1, used during the join sweep to determine which
+        join tree edge to add.
 
-    uf.union(0, 1)
-    uf.union(1, 2)
-    uf.union(3, 4)
-    uf.union(2, 4)
+        Args:
+            x: vertex ID
 
-    print("Root of 0:", uf.find(0))
-    print("Root of 2:", uf.find(2))
-    print("Root of 4:", uf.find(4))
-
-    print("Parent map:", uf.parent)
-    print("Size map:", uf.size)
+        Returns:
+            vertex ID of the lowest-valued vertex in x's component
+        """
+        root = self.find(x)
+        return self.comp_low[root]
