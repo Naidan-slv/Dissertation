@@ -54,3 +54,78 @@ def test_sorted_verts_contains_all_vertices(two_peaks_mesh):
     """
     verts = two_peaks_mesh.sorted_vertices(ascending=True)
     assert sorted(verts) == sorted(two_peaks_mesh.vertices())
+
+
+# -----------------------------------------
+# Step 3 -- Each vertex is made into a singleton set in the UnionFind
+# Before any unions, every vertex must be registered via make_set.
+# Based on: Carr et al. (2003) Algorithm 4.1 -- initialization step
+# -----------------------------------------
+
+def test_make_set_each_vertex(two_peaks_mesh):
+    """
+    compute_join_tree must call make_set for each vertex.
+    We verify this indirectly: if any vertex is skipped,
+    subsequent calls to find() would fail with KeyError.
+    The function should complete without error on a multi-vertex mesh.
+    Based on: Carr et al. (2003) Algorithm 4.1 -- "for i := 1 to n, make_set(i)"
+    """
+    # This test just ensures compute_join_tree can be called
+    # and returns without error. Step 4 will add the union logic
+    # that would fail if any vertex was skipped.
+    result = compute_join_tree(two_peaks_mesh)
+    assert isinstance(result, list)
+
+
+# -----------------------------------------
+# Step 4 -- Union lower neighbours and record join edges
+# For each vertex, find lower neighbours, call union, and record edges.
+# Based on: Carr et al. (2003) Algorithm 4.1 -- join sweep core loop
+# -----------------------------------------
+
+def test_join_tree_two_peaks_merge(two_peaks_mesh):
+    """
+    For two_peaks_merge mesh:
+      vertices: 0(0.1), 1(0.5), 2(0.8), 3(0.9)
+      edges: (0,1), (0,1), (1,2), (0,3)
+    
+    The join tree should have edges connecting lower vertices to where they merge.
+    Expected result: some join edges are recorded.
+    
+    Based on: Carr et al. (2003) Algorithm 4.1.
+    Hand-traced expected edges: [(0,1), (0,2), (0,3)]
+    (vertex 0 is the lowest, vertices 1,2,3 all merge into the component containing 0)
+    """
+    result = compute_join_tree(two_peaks_mesh)
+    
+    # Should have some edges
+    assert isinstance(result, list)
+    assert len(result) > 0, "Join tree should have at least one edge"
+    
+    # Each edge should be a tuple of two vertices
+    for edge in result:
+        assert isinstance(edge, tuple) and len(edge) == 2
+        child, parent = edge
+        assert child in two_peaks_mesh.vertices()
+        assert parent in two_peaks_mesh.vertices()
+        assert child != parent, "A vertex should not merge with itself"
+
+
+def test_join_tree_two_peaks_merge_exact_edges(two_peaks_mesh):
+    """
+    Verify the exact join tree edges for two_peaks_merge.
+    Hand-traced expected: [(0,1), (0,2), (0,3)]
+    
+    Processing order (bottom to top): 0(0.1), 1(0.5), 2(0.8), 3(0.9)
+    - v=0: no lower neighbours, lowest=0, no edge
+    - v=1: lower neighbour 0, union(1,0), lowest=0, edge (0,1)
+    - v=2: lower neighbours 0,1, union(2,1), lowest=0, edge (0,2)
+    - v=3: lower neighbours 0,1, union(3,1), lowest=0, edge (0,3)
+    """
+    result = compute_join_tree(two_peaks_mesh)
+    
+    # Sort for deterministic comparison
+    result_sorted = sorted(result)
+    expected = sorted([(0, 1), (0, 2), (0, 3)])
+    
+    assert result_sorted == expected, f"Expected {expected}, got {result_sorted}"
