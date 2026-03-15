@@ -163,10 +163,61 @@ def saddle_mesh():
         2: 0.5,
         3: 0.9,
     }
-    
+
     triangles = [
         (0, 1, 3),
         (0, 2, 3),
     ]
+
+    return TriMesh2D(values, triangles)
+
+
+def nested_hierarchy_mesh():
+    r"""
+    Mesh with nested/hierarchical join structure.
+    Tests correct component tracking across multiple join levels.
     
+    Structure:
+            5(1.0)          <- peak
+              |
+            4(0.8)          <- intermediate join
+            / \
+         2(0.6) 3(0.7)     <- two separate branches
+             |   |
+             1(0.4)         <- lower merge point
+              |
+            0(0.1)          <- global minimum
+    
+    Expected behavior:
+    - Process order: 0, 1, 2, 3, 4, 5
+    - v=0: no lower neighbours, lowest=0, no edge
+    - v=1: lower=0, union(1,0), lowest=0, edge (0,1)
+    - v=2: lower=0,1, union(2,1), lowest=0, edge (0,2)
+    - v=3: lower=0,1, union(3,1), lowest=0, edge (0,3)
+    - v=4: lower=0,1,2,3, union(4,2), lowest=0, edge (0,4)
+    - v=5: lower=0,1,2,3,4, union(5,4), lowest=0, edge (0,5)
+    
+    Expected join tree edges: [(0,1), (0,2), (0,3), (0,4), (0,5)]
+    
+    References:
+    - Carr et al. (2003) Section 3 -- hierarchical structure of contour trees
+    - Edelsbrunner et al. (2002) Section on topological feature hierarchy
+    """
+    values = {
+        0: 0.1,
+        1: 0.4,
+        2: 0.6,
+        3: 0.7,
+        4: 0.8,
+        5: 1.0,
+    }
+
+    triangles = [
+        (0, 1, 2),  # Lower branch
+        (0, 1, 3),  # Lower branch
+        (2, 3, 4),  # Upper-middle branch
+        (4, 5, 2),  # Upper branch
+        (4, 5, 3),  # Upper branch
+    ]
+
     return TriMesh2D(values, triangles)
