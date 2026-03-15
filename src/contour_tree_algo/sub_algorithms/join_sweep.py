@@ -17,36 +17,30 @@ from src.meshes.mesh import Mesh
 from src.contour_tree_algo.sub_algorithms.unionFind import UnionFind
 
 
-class JoinSweep:
+def compute_join_tree(mesh: Mesh) -> list:
     """
-    Computes the join tree of a scalar field defined on a mesh.
+    Compute the join tree of a scalar field defined on a mesh.
 
-    Usage:
-        sweep = JoinSweep(mesh)
-        edges = sweep.compute()
+    Args:
+        mesh: Any Mesh instance with vertices, neighbors, and scalar values.
 
-    Attributes:
-        mesh:          the input mesh
-        uf:            UnionFind instance (populated after compute())
-        sorted_verts:  vertices in ascending order (populated after compute())
-        edges:         join tree edges as (child, parent) tuples
+    Returns:
+        A list of directed edges (child, parent) forming the join tree.
+        Each edge (u, v) means the arc bottoming at u merges into v.
 
     Based on:
         Carr et al. (2003), Algorithm 4.1.
         Tarjan (1975), Union-Find with weighted union.
     """
+    uf = UnionFind()
+    edges = []
 
-    def __init__(self, mesh: Mesh):
-        self.mesh = mesh
-        self.uf = UnionFind()
-        self.sorted_verts = []
-        self.edges = []
+    # -----------------------------------------
+    # Step 1 -- Sort vertices bottom to top
+    # Vertices must be processed in ascending scalar value order so that
+    # when we process vertex v, all lower neighbours are already in the Union-Find. 
+    # Tiebreaker by vertex ID ensures deterministic ordering.
+    # -----------------------------------------
+    sorted_verts = mesh.sorted_vertices(ascending=True)
 
-    def compute(self) -> list:
-        """
-        Run the join sweep and return the join tree edges.
-
-        Returns:
-            List of (child, parent) tuples representing join tree edges.
-        """
-        return self.edges
+    return edges
