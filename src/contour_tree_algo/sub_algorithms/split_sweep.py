@@ -1,15 +1,15 @@
 """
-Split Sweep -- Mirror of Join Sweep (Algorithm 7.2 applied descending).
+Split Sweep -- Dual of Algorithm 7.2 from Carr et al. (2003).
 
-Computes the split tree of a scalar field on a mesh by processing vertices
-in descending order (top to bottom). The split tree captures where connected
-components split apart as iso-value decreases.
+Computes the fully augmented split tree of a scalar field on a mesh.
+The split tree records where descending connected components split
+as the scalar value decreases from the global maximum downward.
 
 Based on:
     Carr, H., Snoeyink, J., Axen, U. (2003).
-    "Topological Manipulation of Isosurfaces."
-    Computational Geometry, 24(3), 75-94.
-    See: Algorithm 7.2 (join sweep), applied in descending direction.
+        "Computing Contour Trees in All Dimensions."
+        Computational Geometry, 24(3), 75-94.
+        Algorithm 7.2 applied in the ascending direction.
 """
 
 from src.meshes.mesh import Mesh
@@ -20,42 +20,46 @@ def compute_split_tree(mesh: Mesh) -> list:
     """
     Compute the split tree of a scalar field defined on a mesh.
 
-    Applies the split sweep algorithm in descending order (maximum to minimum).
-    For each vertex, identifies all neighbors with higher values and connects
-    their component roots to the current vertex. This records where components
-    split as the iso-value decreases.
+    Processes vertices in ascending order (lowest first).
+    For each vertex v, examines all lower-valued neighbours.
+    When a lower neighbour n belongs to a different component,
+    an edge is added from the highest vertex in n's component to v,
+    then the two components are merged.
 
-    See: Carr et al. (2003), p. 50. Algorithm 7.2 (join sweep logic), applied
-    descending instead of ascending to compute the split tree.
+    After processing all neighbours of v, the component's highest
+    vertex is explicitly set to v (since v is the current maximum).
 
     Args:
         mesh: Any Mesh instance with vertices, neighbors, and scalar values.
 
     Returns:
-        List of directed edges (root, v) forming the split tree, where root
-        is the root of a higher-valued component connecting to v.
+        A list of directed edges (u, v) forming the split tree,
+        where u is the highest vertex of the merging component
+        and v is the vertex where the split occurs.
     """
     uf = UnionFind()
     edges = []
 
-    sorted_verts = mesh.sorted_vertices(ascending=False)
+    # Step 1: Initialise every vertex as a singleton component.
+    for v in mesh.vertices():
+        uf.make_set(v, mesh.value(v))
+
+    # Step 2: Process vertices from lowest to highest scalar value.
+    sorted_verts = mesh.sorted_vertices(ascending=True)
 
     for v in sorted_verts:
-        uf.make_set(v, mesh.value(v))
-        neighbours = mesh.neighbors(v)
-        roots = []
+        # Step 3: For each lower-valued neighbour, merge components.
+        for n in mesh.neighbors(v):
+            if mesh.value(n) < mesh.value(v) or (
+                mesh.value(n) == mesh.value(v) and n < v
+            ):
+                if uf.find(n) != uf.find(v):
+                    u = uf.highest_in_component(n)
+                    edges.append((u, v))
+                    uf.union(n, v)
 
-        for u in neighbours:
-            if mesh.value(u) > mesh.value(v):
-                root_u = uf.find(u)
-                if root_u not in [r[0] for r in roots]:
-                    roots.append((root_u, mesh.value(root_u)))
-
-        roots.sort(key=lambda x: x[1], reverse=True)
-
-        for root, _ in roots:
-            if root != v:
-                edges.append((root, v))
-                uf.union(root, v)
+        # Step 4: v is now the highest vertex in its component.
+        root = uf.find(v)
+        uf.comp_high[root] = v
 
     return edges
