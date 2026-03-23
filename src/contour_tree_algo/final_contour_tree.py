@@ -36,6 +36,6 @@ def compute_contour_tree(mesh: Mesh) -> list:
     """
     join_edges = compute_join_tree(mesh)
     split_edges = compute_split_tree(mesh)
-    contour_tree_edges = merge_trees(join_edges, split_edges)
+    contour_tree_edges = merge_trees(join_edges, split_edges, mesh.value)
 
     return contour_tree_edges
