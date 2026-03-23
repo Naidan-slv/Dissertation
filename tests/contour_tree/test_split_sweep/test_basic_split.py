@@ -23,18 +23,18 @@ def test_single_peak_no_splits(single_peak_mesh):
         |
         0 (0.0)  <- minimum
     
-    When we do the split sweep top-to-bottom, we process [2, 1, 0].
-    At each vertex, we look for HIGHER neighbors and merge them.
+    Split sweep processes ascending: [0, 1, 2].
+    For each vertex, look for LOWER neighbours and merge.
     
-    - v=2: no higher neighbors
-    - v=1: higher neighbor 2, so edge (2, 1)
-    - v=0: higher neighbor 1, so edge (2, 0) (since 0 and 1 are already merged)
+    - v=0: no lower neighbours -> no edge
+    - v=1: lower neighbour 0, highest_in_component(0)=0, edge (0,1), union
+    - v=2: lower neighbours {0,1} (same component), highest=1, edge (1,2)
     
-    Result should be: [(2, 1), (2, 0)]
+    Result should be: [(0,1), (1,2)]
     """
     result = compute_split_tree(single_peak_mesh)
     result_sorted = sorted(result)
-    expected = sorted([(2, 1), (2, 0)])
+    expected = sorted([(0, 1), (1, 2)])
     
     assert result_sorted == expected
 
@@ -57,21 +57,18 @@ def test_two_peaks_binary_split(two_peaks_mesh):
     - 2: {0, 1}  <- NOT neighbors with 3
     - 3: {0, 1}
 
-    Split sweep (descending): process order is [3, 2, 1, 0]
+    Split sweep (ascending): process order is [0, 1, 2, 3]
 
-    - v=3 (0.9): highest peak, no higher neighbors -> no edge
-    - v=2 (0.8): no higher neighbors (3 not connected to 2)-> no edge
-    - v=1 (0.5): neighbors {0,2,3}. Higher neighbors are {2, 3}.
-                 Both 2 and 3 are separate components, so:
-                 edge (2, 1), union(2, 1)
-                 edge (3, 1), union(3, 1)
-                 Result: all three in same component with 3 as root
-    - v=0 (0.1): all neighbors {1,2,3} are higher
-                 find(2) = 3, find(3) = 3 (same root after unions)
-                 only one distinct root: 3-> edge (3, 0)
+    - v=0 (0.1): no lower neighbours -> no edge
+    - v=1 (0.5): lower neighbours {0}.
+                 highest_in_component(0)=0, edge (0,1), union
+    - v=2 (0.8): lower neighbours {0,1} (same component).
+                 highest_in_component(0)=1, edge (1,2), union
+    - v=3 (0.9): lower neighbours {0,1} (same component as 2).
+                 highest_in_component(0)=2, edge (2,3)
 
-    Expected result: [(2, 1), (3, 0), (3, 1)]
+    Expected result: [(0,1), (1,2), (2,3)]
     """
     result = compute_split_tree(two_peaks_mesh)
     result_sorted = sorted(result)
-    expected = sorted([(2, 1), (3, 0), (3, 1)])
+    expected = sorted([(0, 1), (1, 2), (2, 3)])

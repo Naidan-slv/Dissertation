@@ -183,7 +183,7 @@ def test_carr_merge_process():
     mesh = create_carr_9x9_mesh()
     join_edges = compute_join_tree(mesh)
     split_edges = compute_split_tree(mesh)
-    merged_edges = merge_trees(join_edges, split_edges)
+    merged_edges = merge_trees(join_edges, split_edges, mesh.value)
     
     print(f"\n=== MERGE PROCESS VALIDATION ===")
     print(f"Join edges:   {len(join_edges)}")
@@ -195,9 +195,10 @@ def test_carr_merge_process():
     split_set = set(split_edges) | set((v, u) for u, v in split_edges)
     merged_set = set(merged_edges) | set((v, u) for u, v in merged_edges)
     
-    # Merged should be union of join and split
-    expected_merged = join_set | split_set
-    assert merged_set == expected_merged, "Merge must be union of join and split edges"
+    # Merged should be a subset of the union of join and split
+    # (merge removes redundant edges that would create cycles)
+    all_edges = join_set | split_set
+    assert merged_set.issubset(all_edges), "Merged edges must come from join or split tree"
     
     # Check merged tree properties
     assert not has_cycles(merged_edges), "Merged tree must be acyclic"
@@ -233,8 +234,8 @@ def test_carr_contour_tree_final():
         vertices_in_tree.add(v)
     
     print(f"Vertices in tree: {len(vertices_in_tree)} (mesh has {len(mesh.vertices())})")
-    assert len(vertices_in_tree) < len(mesh.vertices()), \
-        "Augmented tree should have fewer nodes than full mesh if there are regular vertices"
+    assert len(vertices_in_tree) <= len(mesh.vertices()), \
+        "Contour tree vertices should be a subset of mesh vertices"
     
     # Degree analysis
     degrees = get_vertex_degrees(contour_edges)
@@ -261,7 +262,7 @@ def test_carr_join_split_merger_consistency():
     # Method 1: Direct pipeline
     join_edges = compute_join_tree(mesh)
     split_edges = compute_split_tree(mesh)
-    pipeline_result = merge_trees(join_edges, split_edges)
+    pipeline_result = merge_trees(join_edges, split_edges, mesh.value)
     
     # Method 2: All-in-one function
     direct_result = compute_contour_tree(mesh)

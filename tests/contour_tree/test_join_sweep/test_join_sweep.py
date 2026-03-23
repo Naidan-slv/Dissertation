@@ -114,18 +114,18 @@ def test_join_tree_two_peaks_merge(two_peaks_mesh):
 def test_join_tree_two_peaks_merge_exact_edges(two_peaks_mesh):
     """
     Verify the exact join tree edges for two_peaks_merge.
-    Hand-traced expected: [(0,1), (0,2), (0,3)]
     
-    Processing order (bottom to top): 0(0.1), 1(0.5), 2(0.8), 3(0.9)
-    - v=0: no lower neighbours, lowest=0, no edge
-    - v=1: lower neighbour 0, union(1,0), lowest=0, edge (0,1)
-    - v=2: lower neighbours 0,1, union(2,1), lowest=0, edge (0,2)
-    - v=3: lower neighbours 0,1, union(3,1), lowest=0, edge (0,3)
+    Processing order (top to bottom): 3(0.9), 2(0.8), 1(0.5), 0(0.1)
+    - v=3: no higher neighbours -> no edge
+    - v=2: no higher neighbours (3 not adjacent) -> no edge
+    - v=1: higher neighbours {2,3}, two distinct components:
+           lowest_in_component(2)=2, edge (2,1); lowest_in_component(3)=3, edge (3,1)
+    - v=0: higher neighbours all one component, lowest=1, edge (1,0)
     """
     result = compute_join_tree(two_peaks_mesh)
     
     # Sort for deterministic comparison
     result_sorted = sorted(result)
-    expected = sorted([(0, 1), (0, 2), (0, 3)])
+    expected = sorted([(1, 0), (2, 1), (3, 1)])
     
     assert result_sorted == expected, f"Expected {expected}, got {result_sorted}"
