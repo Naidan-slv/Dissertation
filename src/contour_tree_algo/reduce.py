@@ -36,4 +36,32 @@ def reduce_contour_tree(ct_edges):
             supernodes: sorted list of critical vertex ids
             superarcs:  list of (u, v) edges connecting supernodes
     """
-    raise NotImplementedError("reduce_contour_tree not yet implemented")
+    if not ct_edges:
+        return [], []
+
+    # Build adjacency
+    adj = defaultdict(set)
+    for u, v in ct_edges:
+        adj[u].add(v)
+        adj[v].add(u)
+
+    # Critical = degree != 2 (leaves have deg 1, saddles have deg >= 3)
+    critical = {v for v, nbrs in adj.items() if len(nbrs) != 2}
+
+    # For each critical vertex, walk along each incident edge until we
+    # reach another critical vertex — that walk defines one superarc.
+    superarc_set = set()
+    for v in critical:
+        for nbr in adj[v]:
+            # Walk from v through nbr until we hit a critical vertex
+            prev, curr = v, nbr
+            while curr not in critical:
+                # curr is degree-2, keep walking
+                nxt = next(w for w in adj[curr] if w != prev)
+                prev, curr = curr, nxt
+            # curr is the other critical endpoint
+            superarc_set.add(tuple(sorted((v, curr))))
+
+    supernodes = sorted(critical)
+    superarcs = [tuple(e) for e in superarc_set]
+    return supernodes, superarcs
