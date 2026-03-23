@@ -16,4 +16,14 @@ def merge_trees(join_edges: list, split_edges: list) -> list:
     """
     all_edges = list(join_edges) + list(split_edges)
     edge_set = set(all_edges)
-    return list(edge_set)
+
+    # Deduplicate opposite-direction edges: (u,v) and (v,u) represent the same arc
+    deduped = []
+    seen_pairs = set()
+    for u, v in edge_set:
+        pair = tuple(sorted([u, v]))
+        if pair not in seen_pairs:
+            deduped.append((u, v))
+            seen_pairs.add(pair)
+
+    return deduped
