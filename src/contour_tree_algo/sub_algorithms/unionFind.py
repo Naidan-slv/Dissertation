@@ -9,7 +9,8 @@ Standard Union-Find operations:
 - union(a, b)
 
 Extended for Carr et al. join/split sweep:
-- lowest_in_component(x)
+- lowest_in_component(x)   -- for join sweep (Algorithm 4.1 ascending)
+- highest_in_component(x)  -- for split sweep (Algorithm 4.1 descending)
 
 Based on:
 - Tarjan, R.E. (1975). "Efficiency of a Good But Not Linear Set Union Algorithm."
@@ -35,6 +36,7 @@ class UnionFind:
         find(x)                    -- return root of component containing x
         union(a, b)                -- merge components of a and b
         lowest_in_component(x)     -- return vertex with lowest f(v) in component
+        highest_in_component(x)    -- return vertex with highest f(v) in component
 
     Based on:
         Tarjan (1975) -- weighted union rule
@@ -63,6 +65,12 @@ class UnionFind:
         # in the component rooted at root.
         # This is the 'LowestVertex' array described in Carr et al. (2003).
         self.comp_low = {}
+
+        # comp_high[root] = the vertex with the HIGHEST scalar value
+        # in the component rooted at root.
+        # Dual of comp_low, used for split sweep (descending).
+        # Carr et al. Algorithm 4.1 applied in reverse.
+        self.comp_high = {}
 
         # scalar values for each vertex — needed to compare during union
         self.value = {}
@@ -93,6 +101,10 @@ class UnionFind:
         # the lowest vertex in a singleton is x itself
         # (Carr et al. 2003: LowestVertex[i] := yi)
         self.comp_low[x] = x
+
+        # the highest vertex in a singleton is also x itself
+        # (Dual of comp_low for split sweep)
+        self.comp_high[x] = x
 
     # -----------------------------------------
     # Step 2 — Find root of component
@@ -130,7 +142,7 @@ class UnionFind:
 
         Uses the weighted union rule (Tarjan 1975):
             always attach the smaller component under the larger one.
-            This keeps the tree shallow and find() efficient.
+            Tie-break by scalar value (higher value becomes root for split efficiency).
 
         Also updates comp_low (Carr et al. 2003):
             after merging, the new component's lowest vertex is the
@@ -145,21 +157,16 @@ class UnionFind:
         rootA = self.find(a)
         rootB = self.find(b)
 
-        # already in the same component — nothing to do
         if rootA == rootB:
             return rootA
 
-        # -----------------------------------------
-        # Weighted union rule (Tarjan 1975):
-        # attach smaller tree under larger tree
-        # -----------------------------------------
         if self.size[rootA] < self.size[rootB]:
             rootA, rootB = rootB, rootA
+        elif self.size[rootA] == self.size[rootB]:
+            if self.value[rootB] > self.value[rootA]:
+                rootA, rootB = rootB, rootA
 
-        # rootB becomes a child of rootA
         self.parent[rootB] = rootA
-
-        # update size of the merged component
         self.size[rootA] += self.size[rootB]
 
         # -----------------------------------------
@@ -174,6 +181,19 @@ class UnionFind:
             self.comp_low[rootA] = low_a
         else:
             self.comp_low[rootA] = low_b
+
+        # -----------------------------------------
+        # Update HighestVertex after merge (dual for split sweep)
+        # The new highest vertex is whichever of the two roots
+        # has the higher scalar value.
+        # -----------------------------------------
+        high_a = self.comp_high[rootA]
+        high_b = self.comp_high[rootB]
+
+        if self.value[high_a] >= self.value[high_b]:
+            self.comp_high[rootA] = high_a
+        else:
+            self.comp_high[rootA] = high_b
 
         return rootA
 
@@ -200,3 +220,23 @@ class UnionFind:
         """
         root = self.find(x)
         return self.comp_low[root]
+
+    # -----------------------------------------
+    # Step 5 — Query highest vertex in component
+    # Based on: Carr et al. (2003), Algorithm 4.1 applied in reverse
+    # Used for split sweep (descending)
+    # -----------------------------------------
+
+    def highest_in_component(self, x):
+        """
+        Return the vertex with the highest scalar value in the component
+        containing x.
+
+        Args:
+            x: vertex ID
+
+        Returns:
+            vertex ID of the highest-valued vertex in x's component
+        """
+        root = self.find(x)
+        return self.comp_high[root]
