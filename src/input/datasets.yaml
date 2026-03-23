@@ -18,169 +18,169 @@ default:
 
 datasets:
   aneurism:
-    path: "klacansky_data/aneurism_256x256x256_uint8.raw"
+    path: "datasets/klacansky/aneurism_256x256x256_uint8.raw"
     shape_whd: [256, 256, 256]
     dtype: "uint8"
     category: "CT"
 
   blunt_fin:
-    path: "klacansky_data/blunt_fin_256x128x64_uint8.raw"
+    path: "datasets/klacansky/blunt_fin_256x128x64_uint8.raw"
     shape_whd: [256, 128, 64]
     dtype: "uint8"
     category: "Simulation"
 
   bonsai:
-    path: "klacansky_data/bonsai_256x256x256_uint8.raw"
+    path: "datasets/klacansky/bonsai_256x256x256_uint8.raw"
     shape_whd: [256, 256, 256]
     dtype: "uint8"
     category: "CT"
 
   boston_teapot:
-    path: "klacansky_data/boston_teapot_256x256x178_uint8.raw"
+    path: "datasets/klacansky/boston_teapot_256x256x178_uint8.raw"
     shape_whd: [256, 256, 178]
     dtype: "uint8"
     category: "CT"
 
   carp:
-    path: "klacansky_data/carp_256x256x512_uint16.raw"
+    path: "datasets/klacansky/carp_256x256x512_uint16.raw"
     shape_whd: [256, 256, 512]
     dtype: "uint16"
     category: "CT"
 
   csafe_heptane:
-    path: "klacansky_data/csafe_heptane_302x302x302_uint8.raw"
+    path: "datasets/klacansky/csafe_heptane_302x302x302_uint8.raw"
     shape_whd: [302, 302, 302]
     dtype: "uint8"
     category: "Simulation"
 
   engine:
-    path: "klacansky_data/engine_256x256x128_uint8.raw"
+    path: "datasets/klacansky/engine_256x256x128_uint8.raw"
     shape_whd: [256, 256, 128]
     dtype: "uint8"
     category: "CT"
 
   foot:
-    path: "klacansky_data/foot_256x256x256_uint8.raw"
+    path: "datasets/klacansky/foot_256x256x256_uint8.raw"
     shape_whd: [256, 256, 256]
     dtype: "uint8"
     category: "CT"
 
   frog:
-    path: "klacansky_data/frog_256x256x44_uint8.raw"
+    path: "datasets/klacansky/frog_256x256x44_uint8.raw"
     shape_whd: [256, 256, 44]
     dtype: "uint8"
     category: "MRI"
 
   fuel:
-    path: "klacansky_data/fuel_64x64x64_uint8.raw"
+    path: "datasets/klacansky/fuel_64x64x64_uint8.raw"
     shape_whd: [64, 64, 64]
     dtype: "uint8"
     category: "Simulation"
 
   hydrogen_atom:
-    path: "klacansky_data/hydrogen_atom_128x128x128_uint8.raw"
+    path: "datasets/klacansky/hydrogen_atom_128x128x128_uint8.raw"
     shape_whd: [128, 128, 128]
     dtype: "uint8"
     category: "Simulation"
 
   lobster:
-    path: "klacansky_data/lobster_301x324x56_uint8.raw"
+    path: "datasets/klacansky/lobster_301x324x56_uint8.raw"
     shape_whd: [301, 324, 56]
     dtype: "uint8"
     category: "CT"
 
   marschner_lobb:
-    path: "klacansky_data/marschner_lobb_41x41x41_uint8.raw"
+    path: "datasets/klacansky/marschner_lobb_41x41x41_uint8.raw"
     shape_whd: [41, 41, 41]
     dtype: "uint8"
     category: "Synthetic"
 
   mri_ventricles:
-    path: "klacansky_data/mri_ventricles_256x256x124_uint8.raw"
+    path: "datasets/klacansky/mri_ventricles_256x256x124_uint8.raw"
     shape_whd: [256, 256, 124]
     dtype: "uint8"
     category: "MRI"
 
   mri_woman:
-    path: "klacansky_data/mri_woman_256x256x109_uint16.raw"
+    path: "datasets/klacansky/mri_woman_256x256x109_uint16.raw"
     shape_whd: [256, 256, 109]
     dtype: "uint16"
     category: "MRI"
 
   mrt_angio:
-    path: "klacansky_data/mrt_angio_416x512x112_uint16.raw"
+    path: "datasets/klacansky/mrt_angio_416x512x112_uint16.raw"
     shape_whd: [416, 512, 112]
     dtype: "uint16"
     category: "MRI"
 
   neghip:
-    path: "klacansky_data/neghip_64x64x64_uint8.raw"
+    path: "datasets/klacansky/neghip_64x64x64_uint8.raw"
     shape_whd: [64, 64, 64]
     dtype: "uint8"
     category: "Simulation"
 
   neocortical_layer_1_axons:
-    path: "klacansky_data/neocortical_layer_1_axons_1464x1033x76_uint8.raw"
+    path: "datasets/klacansky/neocortical_layer_1_axons_1464x1033x76_uint8.raw"
     shape_whd: [1464, 1033, 76]
     dtype: "uint8"
     category: "Microscope"
 
   nucleon:
-    path: "klacansky_data/nucleon_41x41x41_uint8.raw"
+    path: "datasets/klacansky/nucleon_41x41x41_uint8.raw"
     shape_whd: [41, 41, 41]
     dtype: "uint8"
     category: "Synthetic"
 
   pancreas:
-    path: "klacansky_data/pancreas_240x512x512_int16.raw"
+    path: "datasets/klacansky/pancreas_240x512x512_int16.raw"
     shape_whd: [240, 512, 512]
     dtype: "int16"
     category: "CT"
 
   shockwave:
-    path: "klacansky_data/shockwave_64x64x512_uint8.raw"
+    path: "datasets/klacansky/shockwave_64x64x512_uint8.raw"
     shape_whd: [64, 64, 512]
     dtype: "uint8"
     category: "Simulation"
 
   silicium:
-    path: "klacansky_data/silicium_98x34x34_uint8.raw"
+    path: "datasets/klacansky/silicium_98x34x34_uint8.raw"
     shape_whd: [98, 34, 34]
     dtype: "uint8"
     category: "Simulation"
 
   skull:
-    path: "klacansky_data/skull_256x256x256_uint8.raw"
+    path: "datasets/klacansky/skull_256x256x256_uint8.raw"
     shape_whd: [256, 256, 256]
     dtype: "uint8"
     category: "CT"
 
   statue_leg:
-    path: "klacansky_data/statue_leg_341x341x93_uint8.raw"
+    path: "datasets/klacansky/statue_leg_341x341x93_uint8.raw"
     shape_whd: [341, 341, 93]
     dtype: "uint8"
     category: "CT"
 
   stent:
-    path: "klacansky_data/stent_512x512x174_uint16.raw"
+    path: "datasets/klacansky/stent_512x512x174_uint16.raw"
     shape_whd: [512, 512, 174]
     dtype: "uint16"
     category: "CT"
 
   tacc_turbulence:
-    path: "klacansky_data/tacc_turbulence_256x256x256_float32.raw"
+    path: "datasets/klacansky/tacc_turbulence_256x256x256_float32.raw"
     shape_whd: [256, 256, 256]
     dtype: "float32"
     category: "Simulation"
 
   tooth:
-    path: "klacansky_data/tooth_103x94x161_uint8.raw"
+    path: "datasets/klacansky/tooth_103x94x161_uint8.raw"
     shape_whd: [103, 94, 161]
     dtype: "uint8"
     category: "CT"
 
   vis_male:
-    path: "klacansky_data/vis_male_128x256x256_uint8.raw"
+    path: "datasets/klacansky/vis_male_128x256x256_uint8.raw"
     shape_whd: [128, 256, 256]
     dtype: "uint8"
     category: "CT"
