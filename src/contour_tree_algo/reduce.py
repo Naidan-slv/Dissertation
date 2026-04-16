@@ -65,3 +65,61 @@ def reduce_contour_tree(ct_edges):
     supernodes = sorted(critical)
     superarcs = [tuple(e) for e in superarc_set]
     return supernodes, superarcs
+
+
+def remove_perturbation(supernodes, superarcs, value_fn):
+    """
+    Remove artificial critical points created by tie-breaking perturbation.
+
+    During the sweep, vertices with equal scalar values are given a
+    total order by perturbing with vertex ID (Simulation of Simplicity).
+    This creates artificial saddles/extrema on flat plateaus.
+
+    Perturbation removal contracts superarcs whose endpoints share the
+    same scalar value, then re-reduces to clean up any new degree-2
+    vertices.
+
+    Args:
+        supernodes: list of critical vertex ids
+        superarcs:  list of (u, v) superarc edges
+        value_fn:   callable mapping vertex id → scalar value
+
+    Returns:
+        (supernodes, superarcs) with artificial critical points removed
+    """
+    if not superarcs:
+        return supernodes, superarcs
+
+    # Union-Find to merge nodes connected by flat superarcs
+    parent = {v: v for v in supernodes}
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(a, b):
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[rb] = ra
+
+    # Contract all flat superarcs (endpoints with equal scalar value)
+    for u, v in superarcs:
+        if value_fn(u) == value_fn(v):
+            union(u, v)
+
+    # Rebuild edges using representative nodes
+    new_edges = set()
+    for u, v in superarcs:
+        ru, rv = find(u), find(v)
+        if ru != rv:
+            new_edges.add(tuple(sorted((ru, rv))))
+
+    if not new_edges:
+        # Everything collapsed to one node
+        rep = find(supernodes[0])
+        return [rep], []
+
+    # Re-reduce: contracting flat edges may have created degree-2 nodes
+    return reduce_contour_tree(list(new_edges))
