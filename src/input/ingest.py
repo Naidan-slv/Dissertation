@@ -55,3 +55,46 @@ def load_raw_volume(name: str) -> tuple:
         )
 
     return data, w, h, d
+
+
+def load_raw_volume_single_file(
+    file_path: str, shape_whd: tuple, dtype: str = "uint8"
+) -> tuple:
+    """
+    Load a raw binary volume from a single file (not in datasets.yaml).
+
+    Args:
+        file_path: Path to .raw file (absolute or relative to project root)
+        shape_whd: Tuple of (width, height, depth) dimensions
+        dtype: NumPy dtype string (default "uint8")
+
+    Returns:
+        (data, w, h, d) where data is a flat numpy array and w/h/d are
+        the specified dimensions.
+
+    Example:
+        data, w, h, d = load_raw_volume_single_file(
+            "datasets/my_data.raw",
+            shape_whd=(256, 256, 128),
+            dtype="uint16"
+        )
+    """
+    # Handle both relative and absolute paths
+    path = Path(file_path)
+    if not path.is_absolute():
+        path = PROJECT_ROOT / path
+
+    if not path.exists():
+        raise FileNotFoundError(f"Raw file not found: {path}")
+
+    w, h, d = shape_whd
+    data = np.fromfile(str(path), dtype=dtype)
+
+    expected = w * h * d
+    if data.size != expected:
+        raise ValueError(
+            f"Size mismatch: Expected {expected} voxels for shape {shape_whd}, "
+            f"but got {data.size}. Check dimensions or data type."
+        )
+
+    return data, w, h, d
