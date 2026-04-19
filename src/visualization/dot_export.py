@@ -12,10 +12,26 @@ Colour convention (blue=min, red=max) follows Tierny et al. (2018) TTK.
 """
 
 
+from collections import defaultdict
+
+
 def classify_nodes(supernodes, superarcs, value_fn):
     """Classify each supernode as min, max, or saddle based on
     its degree in the tree and its scalar value relative to neighbours."""
-    raise NotImplementedError
+    deg = defaultdict(int)
+    for u, v in superarcs:
+        deg[u] += 1
+        deg[v] += 1
+
+    result = {}
+    for n in supernodes:
+        if deg[n] == 1:
+            # leaf — compare to its single neighbour to decide min vs max
+            nbr = next(v if u == n else u for u, v in superarcs if u == n or v == n)
+            result[n] = "min" if value_fn(n) < value_fn(nbr) else "max"
+        else:
+            result[n] = "saddle"
+    return result
 
 
 def ct_to_dot(supernodes, superarcs, value_fn):
