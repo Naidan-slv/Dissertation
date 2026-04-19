@@ -53,8 +53,6 @@ def create_carr_9x9_mesh():
                 edges.append((v_id, v_id + 9))
             if row < 7 and col > 0:
                 edges.append((v_id, v_id + 8))
-            if row < 7 and col < 8:
-                edges.append((v_id, v_id + 10))
     
     mesh = GridMesh(9, 8, values, edges)
     return mesh
