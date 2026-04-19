@@ -85,12 +85,70 @@ def collect_timings(max_verts=2_100_000, freudenthal=True):
 def plot_total_time_vs_vertices(results, out_path="output/time_vs_vertices.png"):
     """Scatter plot of total computation time (join+split+merge) against
     vertex count. Log-log scale with labelled points."""
-    raise NotImplementedError
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    names = [r["name"] for r in results]
+    verts = [r["vertices"] for r in results]
+    times = [r["t_join"] + r["t_split"] + r["t_merge"] for r in results]
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.scatter(verts, times, s=40, zorder=3)
+
+    for i, name in enumerate(names):
+        ax.annotate(name, (verts[i], times[i]), fontsize=7,
+                    textcoords="offset points", xytext=(5, 4))
+
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel("Vertices")
+    ax.set_ylabel("Time (s)  [join + split + merge]")
+    ax.set_title("Contour Tree Computation Time vs Dataset Size")
+    ax.grid(True, which="both", ls="--", alpha=0.4)
+    fig.tight_layout()
+
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    print(f"  Saved {out_path}")
 
 
 def plot_phase_breakdown(results, out_path="output/phase_breakdown.png"):
     """Stacked bar chart showing join / split / merge time per dataset."""
-    raise NotImplementedError
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    # sort by total compute time
+    results = sorted(results, key=lambda r: r["t_join"] + r["t_split"] + r["t_merge"])
+
+    names = [r["name"] for r in results]
+    t_join  = [r["t_join"]  for r in results]
+    t_split = [r["t_split"] for r in results]
+    t_merge = [r["t_merge"] for r in results]
+
+    x = np.arange(len(names))
+    width = 0.6
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    b1 = ax.bar(x, t_join,  width, label="Join sweep")
+    b2 = ax.bar(x, t_split, width, bottom=t_join, label="Split sweep")
+    bot = [j + s for j, s in zip(t_join, t_split)]
+    b3 = ax.bar(x, t_merge, width, bottom=bot, label="Merge")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(names, rotation=55, ha="right", fontsize=8)
+    ax.set_ylabel("Time (s)")
+    ax.set_title("Per-Phase Timing Breakdown by Dataset")
+    ax.legend()
+    fig.tight_layout()
+
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    print(f"  Saved {out_path}")
 
 
 def save_results_json(results, out_path="output/timing_results.json"):
