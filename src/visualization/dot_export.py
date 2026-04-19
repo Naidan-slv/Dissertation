@@ -34,11 +34,32 @@ def classify_nodes(supernodes, superarcs, value_fn):
     return result
 
 
+COLOURS = {"min": "lightblue", "max": "tomato", "saddle": "lightgrey"}
+SHAPES  = {"min": "ellipse",   "max": "ellipse",  "saddle": "diamond"}
+
+
 def ct_to_dot(supernodes, superarcs, value_fn):
     """Build a DOT-language string for the given contour tree."""
-    raise NotImplementedError
+    labels = classify_nodes(supernodes, superarcs, value_fn)
+
+    lines = ["graph contour_tree {", "    rankdir=BT;"]
+    for n in supernodes:
+        kind = labels[n]
+        lbl = f"{n}\\nval={value_fn(n)}\\n({kind})"
+        lines.append(
+            f'    {n} [label="{lbl}" '
+            f'style=filled fillcolor={COLOURS[kind]} '
+            f'shape={SHAPES[kind]}];'
+        )
+    for u, v in superarcs:
+        lines.append(f"    {u} -- {v};")
+    lines.append("}")
+    return "\n".join(lines)
 
 
 def save_dot(dot_str, path):
     """Write a DOT string out to a file."""
-    raise NotImplementedError
+    import os
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        f.write(dot_str)
