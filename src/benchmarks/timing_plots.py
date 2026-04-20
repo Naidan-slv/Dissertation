@@ -158,6 +158,65 @@ def save_results_json(results, out_path="output/timing_results.json"):
         json.dump(results, f, indent=2)
 
 
+def plot_python_vs_cpp(py_results, cpp_json_path="output/cpp_timing_results.json",
+                       out_path="output/python_vs_cpp.png"):
+    """Side-by-side bar chart comparing Python and C++ computation times
+    on the overlapping Klacansky datasets."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    with open(cpp_json_path) as f:
+        cpp_data = json.load(f)
+    cpp_by_name = {d["name"]: d["t_total"] for d in cpp_data["datasets"]}
+
+    # find overlapping datasets, sorted by vertex count
+    pairs = []
+    for r in py_results:
+        py_compute = r["t_join"] + r["t_split"] + r["t_merge"]
+        cpp_t = cpp_by_name.get(r["name"])
+        if cpp_t is not None:
+            pairs.append((r["name"], r["vertices"], py_compute, cpp_t))
+    pairs.sort(key=lambda p: p[1])
+
+    names  = [p[0] for p in pairs]
+    verts  = [p[1] for p in pairs]
+    py_t   = [p[2] for p in pairs]
+    cpp_t  = [p[3] for p in pairs]
+    ratios = [p / c for p, c in zip(py_t, cpp_t)]
+
+    x = np.arange(len(names))
+    width = 0.35
+
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+
+    bars_py  = ax1.bar(x - width/2, py_t,  width, label="Python", color="steelblue")
+    bars_cpp = ax1.bar(x + width/2, cpp_t, width, label="C++ (-O3)", color="darkorange")
+
+    ax1.set_xticks(x)
+    ax1.set_xticklabels([f"{n}\n({v:,})" for n, v in zip(names, verts)],
+                        rotation=45, ha="right", fontsize=7)
+    ax1.set_ylabel("Computation Time (s)")
+    ax1.set_title("Python vs C++ Contour Tree Computation Time")
+    ax1.set_yscale("log")
+    ax1.legend(loc="upper left")
+    ax1.grid(True, which="both", ls="--", alpha=0.3, axis="y")
+
+    # annotate speedup ratios
+    for i, ratio in enumerate(ratios):
+        y_pos = max(py_t[i], cpp_t[i])
+        ax1.annotate(f"{ratio:.0f}x", (x[i], y_pos),
+                     textcoords="offset points", xytext=(0, 8),
+                     ha="center", fontsize=8, fontweight="bold")
+
+    fig.tight_layout()
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    print(f"  Saved {out_path}")
+
+
 if __name__ == "__main__":
     results = collect_timings()
     save_results_json(results)
