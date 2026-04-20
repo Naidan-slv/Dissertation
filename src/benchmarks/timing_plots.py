@@ -18,8 +18,7 @@ import sys
 def collect_timings(max_verts=2_100_000, freudenthal=True):
     """Run the pipeline on every eligible dataset and return a list of
     result dicts with per-phase timings, vertex count, and supernode count."""
-    from src.input.ingest import load_config
-    from src.input.loaders.raw_loader import load_raw_dataset
+    from src.input.ingest import load_config, load_raw_dataset
     from src.contour_tree_algo.sub_algorithms.join_sweep import compute_join_tree
     from src.contour_tree_algo.sub_algorithms.split_sweep import compute_split_tree
     from src.contour_tree_algo.sub_algorithms.merge import merge_trees
