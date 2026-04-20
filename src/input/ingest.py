@@ -57,6 +57,20 @@ def load_raw_volume(name: str) -> tuple:
     return data, w, h, d
 
 
+def load_raw_dataset(name: str, freudenthal: bool = True):
+    """
+    Load a named dataset from datasets.yaml and return a GridMesh3D.
+
+    :param name: Dataset key in datasets.yaml (e.g. "fuel", "aneurism").
+    :param freudenthal: If True, use 14-connected Freudenthal adjacency.
+    :returns: GridMesh3D ready for contour tree computation.
+    """
+    from src.meshes.grid_mesh_3d import GridMesh3D
+    data, w, h, d = load_raw_volume(name)
+    return GridMesh3D(width=w, height=h, depth=d, data=data,
+                      freudenthal=freudenthal)
+
+
 def load_raw_volume_single_file(
     file_path: str, shape_whd: tuple, dtype: str = "uint8"
 ) -> tuple:

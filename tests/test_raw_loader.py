@@ -11,8 +11,7 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 
-from src.input.loaders.raw_loader import load_raw_dataset
-from src.input.ingest import load_config
+from src.input.ingest import load_raw_dataset, load_config
 from src.meshes.grid_mesh_3d import GridMesh3D
 from src.contour_tree_algo.final_contour_tree import compute_contour_tree
 
@@ -50,7 +49,7 @@ class TestSyntheticRawFile:
             assert name == "test_vol"
             return np.arange(n, dtype=np.uint8), w, h, d
 
-        with patch("src.input.loaders.raw_loader.load_raw_volume", side_effect=fake_load):
+        with patch("src.input.ingest.load_raw_volume", side_effect=fake_load):
             mesh = load_raw_dataset("test_vol", freudenthal=True)
 
         assert isinstance(mesh, GridMesh3D)

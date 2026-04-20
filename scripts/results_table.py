@@ -19,8 +19,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.input.ingest import load_config
-from src.input.loaders.raw_loader import load_raw_dataset
+from src.input.ingest import load_config, load_raw_dataset
 from src.contour_tree_algo.sub_algorithms.join_sweep import compute_join_tree
 from src.contour_tree_algo.sub_algorithms.split_sweep import compute_split_tree
 from src.contour_tree_algo.sub_algorithms.merge import merge_trees
