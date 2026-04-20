@@ -8,13 +8,16 @@ Produces a table similar to Carr (2004) Table 16.2 with:
     - Verification status
 
 Usage:
-    python results_table.py              # run all datasets under 2.1M verts
-    python results_table.py --all        # run ALL datasets (slow for large ones)
-    python results_table.py fuel neghip  # run specific datasets only
+    python scripts/results_table.py              # run all datasets under 2.1M verts
+    python scripts/results_table.py --all        # run ALL datasets (slow for large ones)
+    python scripts/results_table.py fuel neghip  # run specific datasets only
 """
 import argparse
 import time
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.input.ingest import load_config
 from src.input.loaders.raw_loader import load_raw_dataset

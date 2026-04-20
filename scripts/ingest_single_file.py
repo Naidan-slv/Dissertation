@@ -1,8 +1,12 @@
 """
 Example: Load a volumetric dataset from a single .raw file (not in datasets.yaml).
 
-Run with: python ingest_single_file.py
+Run with: python scripts/ingest_single_file.py
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.input.ingest import load_raw_volume_single_file
 from src.meshes.grid_mesh_3d import GridMesh3D
