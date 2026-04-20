@@ -1,0 +1,20 @@
+{
+  "note": "C++ timings from Hamish Carr's SweepAndMergeSerial3D (Freudenthal), compiled with -O3, DEBUG_TIMING enabled. Computation Time = join + split + merge (excludes I/O and sort).",
+  "datasets": [
+    {"name": "nucleon",        "vertices":    68921, "t_join": 0.004, "t_split": 0.004, "t_merge": 0.008, "t_total": 0.016, "superarcs": 578},
+    {"name": "marschner_lobb", "vertices":    68921, "t_join": 0.004, "t_split": 0.004, "t_merge": 0.009, "t_total": 0.016, "superarcs": 1505},
+    {"name": "silicium",       "vertices":   113288, "t_join": 0.007, "t_split": 0.007, "t_merge": 0.016, "t_total": 0.029, "superarcs": 457},
+    {"name": "fuel",           "vertices":   262144, "t_join": 0.011, "t_split": 0.011, "t_merge": 0.021, "t_total": 0.043, "superarcs": 343},
+    {"name": "neghip",         "vertices":   262144, "t_join": 0.014, "t_split": 0.015, "t_merge": 0.033, "t_total": 0.062, "superarcs": 2241},
+    {"name": "shockwave",      "vertices":  2097152, "t_join": 0.083, "t_split": 0.086, "t_merge": 0.175, "t_total": 0.343, "superarcs": 1132},
+    {"name": "hydrogen_atom",  "vertices":  2097152, "t_join": 0.095, "t_split": 0.095, "t_merge": 0.206, "t_total": 0.396, "superarcs": 13592},
+    {"name": "lobster",        "vertices":  5461344, "t_join": 0.598, "t_split": 0.558, "t_merge": 1.330, "t_total": 2.486, "superarcs": 323348},
+    {"name": "engine",         "vertices":  8388608, "t_join": 0.969, "t_split": 0.962, "t_merge": 2.290, "t_total": 4.221, "superarcs": 467701},
+    {"name": "statue_leg",     "vertices": 10814133, "t_join": 0.823, "t_split": 0.644, "t_merge": 1.642, "t_total": 3.109, "superarcs": 353876},
+    {"name": "boston_teapot",   "vertices": 11665408, "t_join": 0.656, "t_split": 0.669, "t_merge": 1.423, "t_total": 2.747, "superarcs": 93329},
+    {"name": "aneurism",       "vertices": 16777216, "t_join": 0.711, "t_split": 0.700, "t_merge": 1.497, "t_total": 2.907, "superarcs": 54196},
+    {"name": "bonsai",         "vertices": 16777216, "t_join": 1.193, "t_split": 1.168, "t_merge": 2.656, "t_total": 5.017, "superarcs": 179626},
+    {"name": "foot",           "vertices": 16777216, "t_join": 2.216, "t_split": 2.107, "t_merge": 4.685, "t_total": 9.007, "superarcs": 719090},
+    {"name": "skull",          "vertices": 16777216, "t_join": 3.831, "t_split": 3.728, "t_merge": 6.192, "t_total": 13.751, "superarcs": 1710476}
+  ]
+}
