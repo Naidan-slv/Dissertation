@@ -1,8 +1,13 @@
 """
-Regular rectangular grid mesh.
+2D rectangular grid mesh with explicit edge connectivity.
 
-Represents a structured grid with explicit edges and scalar values at each vertex.
-This is different from TriMesh2D which builds adjacency from triangles.
+Design rationale:
+    This mesh exists specifically for the Carr et al. (2003) 9x9 worked example,
+    where the paper uses a particular diagonal pattern (NW only, 6-connected) that
+    must be matched exactly to reproduce Figure 7.5.  Unlike TriMesh2D, which
+    derives edges from triangles, this class accepts an explicit edge list so the
+    connectivity can be controlled precisely.  This was essential for validating
+    the implementation against the published result.
 """
 
 from collections import defaultdict

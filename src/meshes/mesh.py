@@ -1,13 +1,19 @@
 """
-src/mesh.py
+Abstract mesh interface for contour tree algorithms.
 
-Generic mesh interface for contour-tree-style algorithms.
+Design rationale:
+    The contour tree algorithm only needs three operations: iterate vertices,
+    query neighbours, and query scalar values. By defining this as an abstract
+    interface, the algorithm is decoupled from any specific mesh representation.
+    This allows the same join/split/merge/reduce pipeline to run on small 2D
+    test meshes (for verification against known results) and large 3D volumetric
+    datasets (for real-world use) without any code changes.
 
-Key idea:
-- The algorithms should operate on "a set of vertices with scalar values + adjacency".
-
-This file defines the abstract interface.Concrete meshes (e.g., TriMesh2D, TetraGridMesh)
-will implement it.
+Concrete implementations:
+    - TriMesh2D:   2D triangulated mesh, used for small hand-built test fixtures.
+    - GridMesh:    2D grid with explicit edges, used for the Carr 9x9 paper example.
+    - GridMesh3D:  3D structured grid with Freudenthal connectivity, used for
+                   real volumetric datasets.
 """
 
 from __future__ import annotations

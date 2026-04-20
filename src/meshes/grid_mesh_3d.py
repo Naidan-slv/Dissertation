@@ -1,23 +1,31 @@
 """
 3D regular grid mesh with Freudenthal tetrahedralization.
 
-Implements the structured grid representation described in Carr (2004) §4.3 and §5.1.
+Design rationale:
+    This is the primary mesh used for real volumetric datasets (e.g. fuel, hydrogen,
+    bonsai from the Klacansky Open SciVis repository).  It takes a flat numpy array
+    of scalar values and computes neighbour connectivity automatically from the grid
+    structure, avoiding the need to store an explicit edge or triangle list for
+    potentially millions of vertices.
 
-Vertex ID scheme (§5.1):
-    v = z * H * W + y * W + x
+    Only the edges of the Freudenthal tetrahedralization are stored (as a 14-offset
+    neighbour pattern), not the tetrahedra themselves, because the contour tree
+    algorithm only requires adjacency — it never needs to walk through cells.
 
-where W = width, H = height, D = depth, and (x, y, z) are grid coordinates.
+Implementation (Carr 2004, §4.3 and §5.1):
+    Vertex ID scheme:
+        v = z * H * W + y * W + x
 
-Adjacency (§4.3):
-    - 6-connected (face neighbours): offsets (±1, 0, 0), (0, ±1, 0), (0, 0, ±1)
-    - Freudenthal tetrahedralization adds 8 more neighbours from the body diagonal
-      decomposition, giving 14 total neighbours per interior vertex.
+    Adjacency:
+        - 6-connected (face neighbours): offsets (±1, 0, 0), (0, ±1, 0), (0, 0, ±1)
+        - Freudenthal tetrahedralization adds 8 more neighbours from the body diagonal
+          decomposition, giving 14 total neighbours per interior vertex.
 
-    The Freudenthal triangulation decomposes each unit cube into 6 tetrahedra sharing
-    the body diagonal from (0,0,0) to (1,1,1). This produces edges along:
-        - 6 face-adjacent directions
-        - 6 face-diagonal directions (oriented by the body diagonal)
-        - 2 body-diagonal directions
+        The Freudenthal triangulation decomposes each unit cube into 6 tetrahedra
+        sharing the body diagonal from (0,0,0) to (1,1,1). This produces edges along:
+            - 6 face-adjacent directions
+            - 6 face-diagonal directions (oriented by the body diagonal)
+            - 2 body-diagonal directions
 """
 
 from typing import List

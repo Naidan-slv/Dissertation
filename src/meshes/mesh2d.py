@@ -1,10 +1,13 @@
 """
-Minimal 2D mesh implementation.
+2D triangulated mesh.
 
-For now:
-- store scalar values per vertex
-- implement vertices() and value()
-- no adjacency yet
+Design rationale:
+    This mesh is used for small, hand-built test fixtures (diamond, linear chain,
+    Y-fork, etc.) where the expected contour tree is known and can be verified by
+    hand.  Testing on these simple cases first ensures the algorithm is correct
+    before it is applied to large 3D volumes where manual verification is
+    impossible.  Adjacency is derived automatically from a list of triangles,
+    which is the natural way to define small 2D meshes.
 """
 
 from __future__ import annotations
