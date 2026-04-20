@@ -2,8 +2,12 @@
 Run the complete contour tree pipeline on a dataset:
   Load → Mesh → Join Tree → Split Tree → Merge → Reduce → Analysis
 
-Run with: python run_full_pipeline.py
+Run with: python scripts/run_full_pipeline.py
 """
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.input.ingest import load_raw_volume
 from src.meshes.grid_mesh_3d import GridMesh3D
