@@ -82,29 +82,33 @@ def collect_timings(max_verts=2_100_000, freudenthal=True):
 
 
 def plot_total_time_vs_vertices(results, out_path="output/time_vs_vertices.png"):
-    """Scatter plot of total computation time (join+split+merge) against
-    vertex count. Log-log scale with labelled points."""
+    """Bar chart of total computation time (join+split+merge) per dataset,
+    sorted by vertex count. Each bar is labelled with the vertex count."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
+    # sort by vertex count
+    results = sorted(results, key=lambda r: r["vertices"])
     names = [r["name"] for r in results]
     verts = [r["vertices"] for r in results]
     times = [r["t_join"] + r["t_split"] + r["t_merge"] for r in results]
 
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.scatter(verts, times, s=40, zorder=3)
+    labels = [f"{n}\n({v:,})" for n, v in zip(names, verts)]
 
-    for i, name in enumerate(names):
-        ax.annotate(name, (verts[i], times[i]), fontsize=7,
-                    textcoords="offset points", xytext=(5, 4))
+    fig, ax = plt.subplots(figsize=(12, 6))
+    bars = ax.bar(range(len(results)), times, color="steelblue", edgecolor="white")
 
-    ax.set_xscale("log")
-    ax.set_yscale("log")
-    ax.set_xlabel("Vertices")
+    # time label above each bar
+    for bar, t in zip(bars, times):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height(),
+                f"{t:.1f}s", ha="center", va="bottom", fontsize=8, fontweight="bold")
+
+    ax.set_xticks(range(len(results)))
+    ax.set_xticklabels(labels, fontsize=8, rotation=45, ha="right")
     ax.set_ylabel("Time (s)  [join + split + merge]")
     ax.set_title("Contour Tree Computation Time vs Dataset Size")
-    ax.grid(True, which="both", ls="--", alpha=0.4)
+    ax.grid(axis="y", ls="--", alpha=0.4)
     fig.tight_layout()
 
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
