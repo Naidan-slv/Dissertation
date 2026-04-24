@@ -12,7 +12,21 @@ Refs: Topological Manipulation of Isosurfaces, Ch 11;
 
 def compute_persistence_pairs(supernodes, superarcs, value_fn):
     """Return list of (leaf, saddle, persistence) sorted by persistence asc."""
-    raise NotImplementedError
+    if not superarcs:
+        return []
+    from collections import defaultdict
+    adj = defaultdict(set)
+    for u, v in superarcs:
+        adj[u].add(v)
+        adj[v].add(u)
+    leaves = [v for v in supernodes if len(adj[v]) == 1]
+    pairs = []
+    for leaf in leaves:
+        saddle = _walk_to_saddle(leaf, adj)
+        p = abs(value_fn(saddle) - value_fn(leaf))
+        pairs.append((leaf, saddle, p))
+    pairs.sort(key=lambda t: (t[2], t[0]))
+    return pairs
 
 
 def _walk_to_saddle(leaf, adj):
