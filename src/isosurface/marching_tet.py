@@ -8,6 +8,10 @@ Refs: Topological Manipulation of Isosurfaces, Ch 5;
 
 def tetrahedron_triangles(points, values, isovalue):
     """Return triangles cut from one tetrahedron."""
+    inside = [value >= isovalue for value in values]
+    n_inside = sum(inside)
+    if n_inside == 0 or n_inside == 4:
+        return []
     raise NotImplementedError
 
 
