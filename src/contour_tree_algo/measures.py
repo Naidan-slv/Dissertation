@@ -71,14 +71,22 @@ def compute_arc_measures(mesh, ct_edges: Iterable[Arc] | None = None) -> Dict[Ar
         ct_edges = compute_contour_tree(mesh)
 
     _, superarcs, paths = reduce_with_superarc_vertices(ct_edges)
+    cells = _mesh_cells(mesh)
     measures: Dict[Arc, ArcMeasure] = {}
 
     for arc in superarcs:
         sample_vertices = paths[arc]
+        sample_set = set(sample_vertices)
         values = [float(mesh.value(v)) for v in sample_vertices]
+        low, high = sorted((float(mesh.value(arc[0])), float(mesh.value(arc[1]))))
+        cell_crossing_count = sum(
+            1
+            for cell in cells
+            if sample_set.intersection(cell) and _cell_crosses_interval(cell, mesh.value, low, high)
+        )
         measures[arc] = ArcMeasure(
             node_count=len(sample_vertices),
-            cell_crossing_count=0,
+            cell_crossing_count=cell_crossing_count,
             scalar_sum=sum(values),
             scalar_square_sum=sum(value * value for value in values),
             sample_vertices=sample_vertices,
@@ -89,9 +97,17 @@ def compute_arc_measures(mesh, ct_edges: Iterable[Arc] | None = None) -> Dict[Ar
 
 def _mesh_cells(mesh) -> List[Tuple[int, ...]]:
     """Return mesh cells used by the cell-crossing approximation."""
-    raise NotImplementedError
+    if hasattr(mesh, "triangles"):
+        return [tuple(cell) for cell in mesh.triangles()]
+
+    if all(hasattr(mesh, attr) for attr in ("W", "H", "D")):
+        from src.meshes.freudenthal_tets import enumerate_tetrahedra
+        return enumerate_tetrahedra(mesh.W, mesh.H, mesh.D)
+
+    return []
 
 
 def _cell_crosses_interval(cell: Tuple[int, ...], value_fn: Callable[[int], float], low: float, high: float) -> bool:
     """Return True if a cell's scalar range intersects a superarc interval."""
-    raise NotImplementedError
+    values = [float(value_fn(v)) for v in cell]
+    return min(values) <= high and max(values) >= low
