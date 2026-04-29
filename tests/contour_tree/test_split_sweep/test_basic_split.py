@@ -40,7 +40,7 @@ def test_single_peak_no_splits(single_peak_mesh):
 
 
 def test_two_peaks_binary_split(two_peaks_mesh):
-    """
+    r"""
     Two peaks connected through a join point. This is the opposite of
     the join sweep - instead of merging upward, we're splitting downward.
     
@@ -72,3 +72,4 @@ def test_two_peaks_binary_split(two_peaks_mesh):
     result = compute_split_tree(two_peaks_mesh)
     result_sorted = sorted(result)
     expected = sorted([(0, 1), (1, 2), (2, 3)])
+    assert result_sorted == expected
