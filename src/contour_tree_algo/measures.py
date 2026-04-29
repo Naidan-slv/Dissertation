@@ -66,7 +66,25 @@ def reduce_with_superarc_vertices(ct_edges: Iterable[Arc]) -> Tuple[List[int], L
 
 def compute_arc_measures(mesh, ct_edges: Iterable[Arc] | None = None) -> Dict[Arc, ArcMeasure]:
     """Compute Carr §10.8 approximate measures for each reduced superarc."""
-    raise NotImplementedError
+    if ct_edges is None:
+        from src.contour_tree_algo.final_contour_tree import compute_contour_tree
+        ct_edges = compute_contour_tree(mesh)
+
+    _, superarcs, paths = reduce_with_superarc_vertices(ct_edges)
+    measures: Dict[Arc, ArcMeasure] = {}
+
+    for arc in superarcs:
+        sample_vertices = paths[arc]
+        values = [float(mesh.value(v)) for v in sample_vertices]
+        measures[arc] = ArcMeasure(
+            node_count=len(sample_vertices),
+            cell_crossing_count=0,
+            scalar_sum=sum(values),
+            scalar_square_sum=sum(value * value for value in values),
+            sample_vertices=sample_vertices,
+        )
+
+    return measures
 
 
 def _mesh_cells(mesh) -> List[Tuple[int, ...]]:
