@@ -11,6 +11,7 @@ contour area or exact enclosed volume.
 
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import dataclass
 from typing import Callable, Dict, Iterable, List, Tuple
 
@@ -31,7 +32,36 @@ class ArcMeasure:
 
 def reduce_with_superarc_vertices(ct_edges: Iterable[Arc]) -> Tuple[List[int], List[Arc], Dict[Arc, Tuple[int, ...]]]:
     """Reduce an augmented tree and keep the vertices absorbed by each superarc."""
-    raise NotImplementedError
+    edges = list(ct_edges)
+    if not edges:
+        return [], [], {}
+
+    adj = defaultdict(set)
+    for u, v in edges:
+        adj[u].add(v)
+        adj[v].add(u)
+
+    critical = {v for v, nbrs in adj.items() if len(nbrs) != 2}
+    paths: Dict[Arc, Tuple[int, ...]] = {}
+
+    for start in sorted(critical):
+        for nbr in sorted(adj[start]):
+            path = [start, nbr]
+            prev, curr = start, nbr
+
+            while curr not in critical:
+                next_vertices = [v for v in adj[curr] if v != prev]
+                if not next_vertices:
+                    break
+                prev, curr = curr, next_vertices[0]
+                path.append(curr)
+
+            key = tuple(sorted((start, curr)))
+            paths.setdefault(key, tuple(path))
+
+    supernodes = sorted(critical)
+    superarcs = sorted(paths)
+    return supernodes, superarcs, paths
 
 
 def compute_arc_measures(mesh, ct_edges: Iterable[Arc] | None = None) -> Dict[Arc, ArcMeasure]:
