@@ -58,6 +58,46 @@ class TestTetrahedronTwoTriangles:
         assert all(len(triangle) == 3 for triangle in triangles)
 
 
+class TestExactIsovalueDegeneracies:
+    """Exact isovalue cases should not emit collapsed triangles."""
+
+    def test_vertex_equal_to_isovalue_emits_no_collapsed_triangle(self):
+        points = [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)]
+        values = [0.5, 0.0, 0.0, 0.0]
+
+        triangles = tetrahedron_triangles(points, values, 0.5)
+
+        assert triangles == []
+
+    def test_edge_equal_to_isovalue_emits_no_collapsed_triangles(self):
+        points = [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)]
+        values = [0.5, 0.5, 0.0, 0.0]
+
+        triangles = tetrahedron_triangles(points, values, 0.5)
+
+        assert triangles == []
+
+    def test_all_vertices_equal_to_isovalue_emits_no_triangles(self):
+        points = [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)]
+        values = [0.5, 0.5, 0.5, 0.5]
+
+        triangles = tetrahedron_triangles(points, values, 0.5)
+
+        assert triangles == []
+
+    def test_equal_scalar_interpolation_returns_none(self):
+        point = interpolate_edge((0, 0, 0), (1, 0, 0), 0.5, 0.5, 0.5)
+
+        assert point is None
+
+    def test_grid_extraction_drops_repeated_triangle_vertices(self):
+        data = [0.5, 0.5, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0]
+
+        _, triangles = extract_isosurface(2, 2, 2, data, 0.5)
+
+        assert all(len(set(triangle)) == 3 for triangle in triangles)
+
+
 class TestExtractIsosurface:
     """Grid-level marching tetrahedra extraction."""
 
