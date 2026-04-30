@@ -261,7 +261,30 @@ def edge_priority(
     interior: int | None = None,
 ) -> float:
     """Return the pruning priority for a leaf edge."""
-    raise NotImplementedError
+    if leaf is None or interior is None:
+        info = leaf_info(state, edge_id)
+        if info is None:
+            raise ValueError(f"edge {edge_id} is not an active leaf edge")
+        leaf, interior = info
+
+    if mode == "height":
+        return abs(float(state.values[leaf]) - float(state.values[interior]))
+
+    if mode == "measure":
+        edge = state.edges[edge_id]
+        weight = edge.up_weight
+        if scalar_order(state, leaf) < scalar_order(state, interior):
+            weight = edge.down_weight
+        if weight != 0.0:
+            return float(weight)
+
+        key = _measure_key(edge.u, edge.v)
+        if state.measures and key in state.measures and hasattr(state.measures[key], "node_count"):
+            return float(state.measures[key].node_count)
+
+        return abs(float(state.values[leaf]) - float(state.values[interior]))
+
+    raise ValueError(f"unknown simplification mode: {mode}")
 
 
 def leaf_prune(state: MutableTree, edge_id: int, priority: float | None = None) -> int:
