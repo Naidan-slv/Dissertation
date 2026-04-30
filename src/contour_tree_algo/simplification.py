@@ -12,6 +12,7 @@ Height mode is contour-tree leaf-to-saddle height pruning, not full persistent h
 
 from __future__ import annotations
 
+from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, Literal, Mapping, Tuple
 
@@ -70,6 +71,7 @@ class MutableTree:
     edges: Dict[int, MutableEdge]
     adj: Dict[int, set[int]]
     values: Mapping[int, float]
+    measures: Mapping[Edge, ArcMeasure] | None = None
     next_edge_id: int = 0
     collapse_record: list[CollapseRecord] = field(default_factory=list)
     removed_edges: list[int] = field(default_factory=list)
@@ -93,62 +95,112 @@ def build_mutable_tree(
     measures: Mapping[Edge, ArcMeasure] | None = None,
 ) -> MutableTree:
     """Build mutable edge and adjacency records."""
-    raise NotImplementedError
+    edges: Dict[int, MutableEdge] = {}
+    adj: Dict[int, set[int]] = defaultdict(set)
+
+    for edge_id, (u, v) in enumerate(tree):
+        edge = MutableEdge(id=edge_id, u=u, v=v)
+        key = _measure_key(u, v)
+        if measures and key in measures:
+            measure = measures[key]
+            edge.up_weight = float(measure.node_count)
+            edge.down_weight = float(measure.node_count)
+        edges[edge_id] = edge
+        adj[u].add(edge_id)
+        adj[v].add(edge_id)
+
+    return MutableTree(
+        edges=edges,
+        adj=adj,
+        values=values,
+        measures=measures,
+        next_edge_id=len(edges),
+    )
 
 
 def scalar_order(state: MutableTree, vertex: int) -> tuple[float, int]:
     """Return deterministic scalar order for a vertex."""
-    raise NotImplementedError
+    return (float(state.values[vertex]), vertex)
 
 
 def active_edge_ids(state: MutableTree) -> list[int]:
     """Return active edge ids."""
-    raise NotImplementedError
+    return [edge_id for edge_id, edge in state.edges.items() if edge.active]
 
 
 def active_edges(state: MutableTree) -> list[Edge]:
     """Return active tree edges as endpoint pairs."""
-    raise NotImplementedError
+    return [(edge.u, edge.v) for edge in state.edges.values() if edge.active]
 
 
 def other_endpoint(edge: MutableEdge, vertex: int) -> int:
     """Return the endpoint of edge opposite vertex."""
-    raise NotImplementedError
+    if edge.u == vertex:
+        return edge.v
+    if edge.v == vertex:
+        return edge.u
+    raise ValueError(f"vertex {vertex} is not incident to edge {edge.id}")
 
 
 def active_incident_edges(state: MutableTree, vertex: int) -> list[int]:
     """Return active edge ids incident to vertex."""
-    raise NotImplementedError
+    return [edge_id for edge_id in state.adj[vertex] if state.edges[edge_id].active]
 
 
 def up_degree(state: MutableTree, vertex: int) -> int:
     """Count active incident edges to higher neighbours."""
-    raise NotImplementedError
+    count = 0
+    for edge_id in active_incident_edges(state, vertex):
+        nbr = other_endpoint(state.edges[edge_id], vertex)
+        if scalar_order(state, nbr) > scalar_order(state, vertex):
+            count += 1
+    return count
 
 
 def down_degree(state: MutableTree, vertex: int) -> int:
     """Count active incident edges to lower neighbours."""
-    raise NotImplementedError
+    count = 0
+    for edge_id in active_incident_edges(state, vertex):
+        nbr = other_endpoint(state.edges[edge_id], vertex)
+        if scalar_order(state, nbr) < scalar_order(state, vertex):
+            count += 1
+    return count
 
 
 def is_regular(state: MutableTree, vertex: int) -> bool:
     """Return True when vertex has one up-edge and one down-edge."""
-    raise NotImplementedError
+    return up_degree(state, vertex) == 1 and down_degree(state, vertex) == 1
 
 
 def is_leaf(state: MutableTree, vertex: int) -> bool:
     """Return True when vertex has one active incident edge."""
-    raise NotImplementedError
+    return len(active_incident_edges(state, vertex)) == 1
+
+
+def _measure_key(u: int, v: int) -> Edge:
+    return tuple(sorted((u, v)))
 
 
 def leaf_info(state: MutableTree, edge_id: int) -> tuple[int, int] | None:
     """Return (leaf, interior) for a leaf edge, or None."""
-    raise NotImplementedError
+    edge = state.edges[edge_id]
+    if not edge.active:
+        return None
+
+    u_is_leaf = is_leaf(state, edge.u)
+    v_is_leaf = is_leaf(state, edge.v)
+    if u_is_leaf and not v_is_leaf:
+        return edge.u, edge.v
+    if v_is_leaf and not u_is_leaf:
+        return edge.v, edge.u
+    return None
 
 
 def is_prunable_leaf(state: MutableTree, leaf: int, interior: int) -> bool:
     """Return True when Carr Definition 11.2 allows pruning this leaf."""
-    raise NotImplementedError
+    if scalar_order(state, leaf) > scalar_order(state, interior):
+        return up_degree(state, interior) > 1
+    return down_degree(state, interior) > 1
 
 
 def vertex_collapse(state: MutableTree, vertex: int) -> int:
