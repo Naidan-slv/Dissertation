@@ -7,6 +7,7 @@ from src.contour_tree_algo.simplification import (
     is_prunable_leaf,
     leaf_info,
     leaf_prune,
+    simplify_contour_tree,
 )
 
 
@@ -34,6 +35,18 @@ def test_last_upper_leaf_is_not_prunable():
     state = build_mutable_tree([(9, 5), (5, 0), (5, 1)], values)
 
     assert not is_prunable_leaf(state, 9, 5)
+
+
+def test_carr_figure_11_5_upper_leaf_is_not_pruned():
+    values = {50: 50.0, 71: 71.0, 81: 81.0, 90: 90.0}
+    tree = [(90, 81), (81, 71), (81, 50)]
+    state = build_mutable_tree(tree, values)
+
+    assert not is_prunable_leaf(state, 90, 81)
+
+    result = simplify_contour_tree(tree, values, mode="height", threshold=float("inf"))
+    leaf_prunes = [record for record in result.collapse_record if record.kind == "leaf_prune"]
+    assert all(record.leaf != 90 for record in leaf_prunes)
 
 
 def test_lower_leaf_is_prunable_when_interior_has_multiple_down_edges():
