@@ -101,7 +101,7 @@ def build_mutable_tree(
     for edge_id, (u, v) in enumerate(tree):
         edge = MutableEdge(id=edge_id, u=u, v=v)
         key = _measure_key(u, v)
-        if measures and key in measures:
+        if measures and key in measures and hasattr(measures[key], "node_count"):
             measure = measures[key]
             edge.up_weight = float(measure.node_count)
             edge.down_weight = float(measure.node_count)
@@ -205,7 +205,52 @@ def is_prunable_leaf(state: MutableTree, leaf: int, interior: int) -> bool:
 
 def vertex_collapse(state: MutableTree, vertex: int) -> int:
     """Collapse a regular vertex following Carr Algorithm 11.1."""
-    raise NotImplementedError
+    incident = active_incident_edges(state, vertex)
+    if len(incident) != 2 or not is_regular(state, vertex):
+        raise ValueError(f"vertex {vertex} is not regular")
+
+    first_id, second_id = incident
+    first = state.edges[first_id]
+    second = state.edges[second_id]
+    a = other_endpoint(first, vertex)
+    b = other_endpoint(second, vertex)
+    upper, lower = sorted((a, b), key=lambda v: scalar_order(state, v), reverse=True)
+
+    upper_edge_id = first_id if other_endpoint(first, vertex) == upper else second_id
+    lower_edge_id = first_id if other_endpoint(first, vertex) == lower else second_id
+    upper_edge = state.edges[upper_edge_id]
+    lower_edge = state.edges[lower_edge_id]
+
+    for edge_id in (upper_edge_id, lower_edge_id):
+        edge = state.edges[edge_id]
+        edge.active = False
+        edge.already_collapsed = True
+        state.adj[edge.u].discard(edge_id)
+        state.adj[edge.v].discard(edge_id)
+
+    new_edge_id = state.next_edge_id
+    state.next_edge_id += 1
+    new_edge = MutableEdge(
+        id=new_edge_id,
+        u=upper,
+        v=lower,
+        upper_arc=upper_edge_id,
+        lower_arc=lower_edge_id,
+        old_edges=(upper_edge_id, lower_edge_id),
+        up_weight=upper_edge.up_weight,
+        down_weight=lower_edge.down_weight,
+    )
+    state.edges[new_edge_id] = new_edge
+    state.adj[upper].add(new_edge_id)
+    state.adj[lower].add(new_edge_id)
+    state.adj[vertex].clear()
+    state.collapse_record.insert(0, CollapseRecord(
+        kind="vertex_collapse",
+        removed_edges=(upper_edge_id, lower_edge_id),
+        new_edge=new_edge_id,
+        collapsed_vertex=vertex,
+    ))
+    return new_edge_id
 
 
 def edge_priority(
