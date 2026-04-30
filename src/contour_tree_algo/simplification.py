@@ -12,6 +12,7 @@ Height mode is contour-tree leaf-to-saddle height pruning, not full persistent h
 
 from __future__ import annotations
 
+import heapq
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, Literal, Mapping, Tuple
@@ -86,7 +87,63 @@ def simplify_contour_tree(
     target_edges: int | None = None,
 ) -> SimplificationResult:
     """Simplify a contour tree using Carr-style collapses and leaf pruning."""
-    raise NotImplementedError
+    if mode not in ("height", "measure"):
+        raise ValueError(f"unknown simplification mode: {mode}")
+
+    state = build_mutable_tree(tree, values, measures)
+    if threshold is None and target_edges is None:
+        return SimplificationResult(
+            edges=active_edges(state),
+            collapse_record=state.collapse_record,
+            removed_edges=state.removed_edges,
+            mode=mode,
+            threshold=threshold,
+            target_edges=target_edges,
+        )
+
+    queue: list[tuple[float, tuple[float, int], int, int]] = []
+
+    def push_leaf(edge_id: int) -> None:
+        info = leaf_info(state, edge_id)
+        if info is None:
+            return
+        leaf, interior = info
+        if not is_prunable_leaf(state, leaf, interior):
+            return
+        priority = edge_priority(state, edge_id, mode=mode, leaf=leaf, interior=interior)
+        heapq.heappush(queue, (priority, scalar_order(state, leaf), leaf, edge_id))
+
+    for edge_id in active_edge_ids(state):
+        push_leaf(edge_id)
+
+    while queue:
+        if target_edges is not None and len(active_edge_ids(state)) <= target_edges:
+            break
+
+        _, _, _, edge_id = heapq.heappop(queue)
+        info = leaf_info(state, edge_id)
+        if info is None:
+            continue
+        leaf, interior = info
+        if not is_prunable_leaf(state, leaf, interior):
+            continue
+
+        priority = edge_priority(state, edge_id, mode=mode, leaf=leaf, interior=interior)
+        if threshold is not None and priority > threshold:
+            break
+
+        changed_vertex = leaf_prune(state, edge_id, priority=priority)
+        for incident_edge_id in active_incident_edges(state, changed_vertex):
+            push_leaf(incident_edge_id)
+
+    return SimplificationResult(
+        edges=active_edges(state),
+        collapse_record=state.collapse_record,
+        removed_edges=state.removed_edges,
+        mode=mode,
+        threshold=threshold,
+        target_edges=target_edges,
+    )
 
 
 def build_mutable_tree(
