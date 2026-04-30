@@ -147,8 +147,12 @@ def simplify_contour_tree(
             break
 
         changed_vertex = leaf_prune(state, edge_id, priority=priority)
-        for incident_edge_id in active_incident_edges(state, changed_vertex):
-            push_leaf(incident_edge_id)
+        if is_regular(state, changed_vertex):
+            new_edge_id = vertex_collapse(state, changed_vertex)
+            push_leaf(new_edge_id)
+        else:
+            for incident_edge_id in active_incident_edges(state, changed_vertex):
+                push_leaf(incident_edge_id)
 
     return SimplificationResult(
         edges=active_edges(state),
