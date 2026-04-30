@@ -266,4 +266,24 @@ def edge_priority(
 
 def leaf_prune(state: MutableTree, edge_id: int, priority: float | None = None) -> int:
     """Remove a prunable leaf edge and return the interior vertex."""
-    raise NotImplementedError
+    info = leaf_info(state, edge_id)
+    if info is None:
+        raise ValueError(f"edge {edge_id} is not an active leaf edge")
+
+    leaf, interior = info
+    if not is_prunable_leaf(state, leaf, interior):
+        raise ValueError(f"leaf {leaf} is not prunable from interior {interior}")
+
+    edge = state.edges[edge_id]
+    edge.active = False
+    state.adj[edge.u].discard(edge_id)
+    state.adj[edge.v].discard(edge_id)
+    state.removed_edges.append(edge_id)
+    state.collapse_record.insert(0, CollapseRecord(
+        kind="leaf_prune",
+        removed_edges=(edge_id,),
+        leaf=leaf,
+        interior=interior,
+        priority=priority,
+    ))
+    return interior
