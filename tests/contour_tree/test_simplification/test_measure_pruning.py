@@ -55,8 +55,10 @@ def test_measure_mode_can_choose_different_leaf_than_height_mode():
         target_edges=2,
     )
 
-    assert height_result.collapse_record[0].leaf == 8
-    assert measure_result.collapse_record[0].leaf == 20
+    height_leaf_prunes = [record for record in height_result.collapse_record if record.kind == "leaf_prune"]
+    measure_leaf_prunes = [record for record in measure_result.collapse_record if record.kind == "leaf_prune"]
+    assert height_leaf_prunes[-1].leaf == 8
+    assert measure_leaf_prunes[-1].leaf == 20
     assert _edge_set(height_result.edges) != _edge_set(measure_result.edges)
 
 
