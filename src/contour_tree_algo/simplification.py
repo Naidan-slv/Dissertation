@@ -347,9 +347,10 @@ def edge_priority(
 
     if mode == "measure":
         edge = state.edges[edge_id]
-        weight = edge.up_weight
-        if scalar_order(state, leaf) < scalar_order(state, interior):
+        if scalar_order(state, leaf) > scalar_order(state, interior):
             weight = edge.down_weight
+        else:
+            weight = edge.up_weight
         if weight != 0.0:
             return float(weight)
 
