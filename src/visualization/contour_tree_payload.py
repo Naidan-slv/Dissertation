@@ -34,12 +34,16 @@ def build_contour_tree_payload(supernodes, superarcs, value_fn, isovalue=None):
     edges = []
     for u, v in superarcs:
         value_range = _edge_range(u, v, value_fn)
+        active_at_isovalue = _is_active(value_range, isovalue)
         edges.append(
             {
                 "source": int(u),
                 "target": int(v),
                 "value_range": value_range,
-                "active": _is_active(value_range, isovalue),
+                # Keep "active" for the early payload tests, but expose the
+                # clearer name used in the viewer plan.
+                "active": active_at_isovalue,
+                "active_at_isovalue": active_at_isovalue,
             }
         )
 
