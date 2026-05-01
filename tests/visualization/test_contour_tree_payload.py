@@ -18,8 +18,20 @@ def test_contour_tree_payload_records_nodes_and_edges():
         {"id": 23, "value": 100.0, "kind": "max"},
     ]
     assert payload["edges"] == [
-        {"source": 8, "target": 16, "value_range": [0.0, 30.0], "active": False},
-        {"source": 16, "target": 23, "value_range": [30.0, 100.0], "active": False},
+        {
+            "source": 8,
+            "target": 16,
+            "value_range": [0.0, 30.0],
+            "active": False,
+            "active_at_isovalue": False,
+        },
+        {
+            "source": 16,
+            "target": 23,
+            "value_range": [30.0, 100.0],
+            "active": False,
+            "active_at_isovalue": False,
+        },
     ]
 
 
@@ -34,3 +46,4 @@ def test_contour_tree_payload_marks_active_arc_for_isovalue():
     )
 
     assert [edge["active"] for edge in payload["edges"]] == [True, False]
+    assert [edge["active_at_isovalue"] for edge in payload["edges"]] == [True, False]

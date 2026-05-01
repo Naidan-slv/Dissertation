@@ -23,7 +23,13 @@ def test_viewer_payload_uses_same_isovalue_for_surface_and_tree():
     assert payload["isosurface"]["dataset_name"] == "tiny grid"
     assert payload["isosurface"]["triangle_count"] > 0
     assert payload["contour_tree"]["edges"] == [
-        {"source": 0, "target": 1, "value_range": [0.0, 1.0], "active": True}
+        {
+            "source": 0,
+            "target": 1,
+            "value_range": [0.0, 1.0],
+            "active": True,
+            "active_at_isovalue": True,
+        }
     ]
 
 
