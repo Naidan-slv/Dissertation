@@ -5,6 +5,7 @@ import json
 from src.visualization.isosurface_payload import (
     VIEWER_PAYLOAD_SCHEMA_VERSION,
     build_isosurface_payload,
+    extract_isosurface_payload,
 )
 
 
@@ -69,3 +70,29 @@ def test_degenerate_triangles_are_dropped():
 
     assert payload["faces"] == []
     assert payload["triangle_count"] == 0
+
+
+def test_extracted_payload_records_range_even_when_surface_is_empty():
+    payload = extract_isosurface_payload(
+        width=2,
+        height=2,
+        depth=2,
+        data=[0.0] * 8,
+        isovalue=1.0,
+        dataset_name="flat cube",
+    )
+
+    assert payload["dataset_name"] == "flat cube"
+    assert payload["scalar_range"] == [0.0, 0.0]
+    assert payload["points"] == []
+    assert payload["triangle_count"] == 0
+
+
+def test_extracted_payload_keeps_grid_xyz_order():
+    data = [0.0] * 8
+    data[1] = 1.0  # vertex (x=1, y=0, z=0)
+
+    payload = extract_isosurface_payload(2, 2, 2, data, isovalue=0.5)
+
+    assert payload["triangle_count"] > 0
+    assert payload["bounds"] == {"x": [0.5, 1.0], "y": [0.0, 0.5], "z": [0.0, 0.5]}
