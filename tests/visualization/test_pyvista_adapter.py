@@ -4,18 +4,36 @@ import sys
 
 import pytest
 
-from src.visualization.pyvista_adapter import payload_to_polydata, require_pyvista
+from src.visualization.pyvista_adapter import build_isosurface_plotter, payload_to_polydata, require_pyvista
 
 
 class FakePyVista:
     def __init__(self):
         self.last_points = None
         self.last_faces = None
+        self.plotters = []
 
     def PolyData(self, points, faces):
         self.last_points = points
         self.last_faces = faces
         return {"points": points, "faces": faces}
+
+    def Plotter(self):
+        plotter = FakePlotter()
+        self.plotters.append(plotter)
+        return plotter
+
+
+class FakePlotter:
+    def __init__(self):
+        self.meshes = []
+        self.axes_shown = False
+
+    def add_mesh(self, mesh, **kwargs):
+        self.meshes.append((mesh, kwargs))
+
+    def show_axes(self):
+        self.axes_shown = True
 
 
 def test_require_pyvista_reports_missing_optional_dependency(monkeypatch):
@@ -37,3 +55,27 @@ def test_payload_to_polydata_uses_vtk_face_layout(monkeypatch):
 
     assert mesh == {"points": payload["points"], "faces": [3, 0, 1, 2]}
     assert fake_pyvista.last_faces == [3, 0, 1, 2]
+
+
+def test_payload_to_polydata_rejects_non_triangle_faces(monkeypatch):
+    monkeypatch.setitem(sys.modules, "pyvista", FakePyVista())
+    payload = {"points": [], "faces": [[0, 1, 2, 3]]}
+
+    with pytest.raises(ValueError, match="triangle faces"):
+        payload_to_polydata(payload)
+
+
+def test_build_isosurface_plotter_adds_mesh_without_showing_window(monkeypatch):
+    fake_pyvista = FakePyVista()
+    monkeypatch.setitem(sys.modules, "pyvista", fake_pyvista)
+    payload = {
+        "points": [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
+        "faces": [[0, 1, 2]],
+    }
+
+    plotter = build_isosurface_plotter(payload)
+
+    assert plotter is fake_pyvista.plotters[0]
+    assert plotter.meshes[0][0] == {"points": payload["points"], "faces": [3, 0, 1, 2]}
+    assert plotter.meshes[0][1] == {"color": "tomato", "show_edges": True, "opacity": 0.75}
+    assert plotter.axes_shown is True
