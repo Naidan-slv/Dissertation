@@ -4,7 +4,12 @@ import sys
 
 import pytest
 
-from src.visualization.pyvista_adapter import build_isosurface_plotter, payload_to_polydata, require_pyvista
+from src.visualization.pyvista_adapter import (
+    build_isosurface_plotter,
+    payload_to_polydata,
+    require_pyvista,
+    save_isosurface_screenshot,
+)
 
 
 class FakePyVista:
@@ -18,22 +23,27 @@ class FakePyVista:
         self.last_faces = faces
         return {"points": points, "faces": faces}
 
-    def Plotter(self):
-        plotter = FakePlotter()
+    def Plotter(self, **kwargs):
+        plotter = FakePlotter(**kwargs)
         self.plotters.append(plotter)
         return plotter
 
 
 class FakePlotter:
-    def __init__(self):
+    def __init__(self, **kwargs):
+        self.kwargs = kwargs
         self.meshes = []
         self.axes_shown = False
+        self.show_calls = []
 
     def add_mesh(self, mesh, **kwargs):
         self.meshes.append((mesh, kwargs))
 
     def show_axes(self):
         self.axes_shown = True
+
+    def show(self, **kwargs):
+        self.show_calls.append(kwargs)
 
 
 def test_require_pyvista_reports_missing_optional_dependency(monkeypatch):
@@ -79,3 +89,19 @@ def test_build_isosurface_plotter_adds_mesh_without_showing_window(monkeypatch):
     assert plotter.meshes[0][0] == {"points": payload["points"], "faces": [3, 0, 1, 2]}
     assert plotter.meshes[0][1] == {"color": "tomato", "show_edges": True, "opacity": 0.75}
     assert plotter.axes_shown is True
+
+
+def test_save_isosurface_screenshot_uses_off_screen_plotter(monkeypatch, tmp_path):
+    fake_pyvista = FakePyVista()
+    monkeypatch.setitem(sys.modules, "pyvista", fake_pyvista)
+    payload = {
+        "points": [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
+        "faces": [[0, 1, 2]],
+    }
+    out = tmp_path / "surface.png"
+
+    result = save_isosurface_screenshot(payload, out)
+
+    assert result == str(out)
+    assert fake_pyvista.plotters[0].kwargs == {"off_screen": True}
+    assert fake_pyvista.plotters[0].show_calls == [{"screenshot": str(out), "auto_close": True}]
