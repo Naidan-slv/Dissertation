@@ -35,14 +35,28 @@ def payload_to_polydata(payload):
     return pyvista.PolyData(payload["points"], _vtk_faces(payload["faces"]))
 
 
-def build_isosurface_plotter(payload, color="tomato", opacity=0.75, show_edges=True):
+def build_isosurface_plotter(
+    payload,
+    color="tomato",
+    opacity=0.75,
+    show_edges=True,
+    off_screen=False,
+):
     """Build a plotter for the mesh without opening a window.
 
     Tests can check this safely because callers decide when to call ``show()``.
     """
     pyvista = require_pyvista()
     mesh = payload_to_polydata(payload)
-    plotter = pyvista.Plotter()
+    plotter = pyvista.Plotter(off_screen=off_screen)
     plotter.add_mesh(mesh, color=color, show_edges=show_edges, opacity=opacity)
     plotter.show_axes()
     return plotter
+
+
+def save_isosurface_screenshot(payload, path):
+    """Render a payload off-screen and save a screenshot path."""
+    output_path = str(path)
+    plotter = build_isosurface_plotter(payload, off_screen=True)
+    plotter.show(screenshot=output_path, auto_close=True)
+    return output_path
