@@ -93,3 +93,18 @@ def extract_isosurface_payload(width, height, depth, data, isovalue, dataset_nam
         dataset_name=dataset_name,
         scalar_range=_scalar_range(values),
     )
+
+
+def extract_grid_mesh_payload(mesh, isovalue, dataset_name=None):
+    """Build an isosurface payload from this project's 3D grid mesh class."""
+    # Keep this adapter thin: GridMesh3D owns values/dimensions, while the
+    # marching tetrahedra code still owns the actual surface extraction.
+    values = [mesh.value(v) for v in mesh.vertices()]
+    return extract_isosurface_payload(
+        mesh.W,
+        mesh.H,
+        mesh.D,
+        values,
+        isovalue,
+        dataset_name=dataset_name,
+    )
