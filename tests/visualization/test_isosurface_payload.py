@@ -2,10 +2,14 @@
 
 import json
 
+import numpy as np
+
+from src.meshes.grid_mesh_3d import GridMesh3D
 from src.visualization.isosurface_payload import (
     VIEWER_PAYLOAD_SCHEMA_VERSION,
     build_isosurface_payload,
     extract_isosurface_payload,
+    extract_grid_mesh_payload,
 )
 
 
@@ -95,4 +99,16 @@ def test_extracted_payload_keeps_grid_xyz_order():
     payload = extract_isosurface_payload(2, 2, 2, data, isovalue=0.5)
 
     assert payload["triangle_count"] > 0
+    assert payload["bounds"] == {"x": [0.5, 1.0], "y": [0.0, 0.5], "z": [0.0, 0.5]}
+
+
+def test_grid_mesh_payload_uses_project_grid_mesh_values():
+    data = np.zeros(8)
+    data[1] = 1.0
+    mesh = GridMesh3D(2, 2, 2, data)
+
+    payload = extract_grid_mesh_payload(mesh, isovalue=0.5, dataset_name="grid mesh")
+
+    assert payload["dataset_name"] == "grid mesh"
+    assert payload["scalar_range"] == [0.0, 1.0]
     assert payload["bounds"] == {"x": [0.5, 1.0], "y": [0.0, 0.5], "z": [0.0, 0.5]}
