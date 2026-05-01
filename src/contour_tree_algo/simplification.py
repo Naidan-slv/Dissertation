@@ -78,6 +78,18 @@ class MutableTree:
     removed_edges: list[int] = field(default_factory=list)
 
 
+def collapse_all_regular_vertices(state: MutableTree) -> None:
+    """Collapse all currently regular vertices (Carr Algorithm 11.2 Rule I)."""
+    candidates = [vertex for vertex in list(state.adj) if is_regular(state, vertex)]
+    while candidates:
+        vertex = candidates.pop()
+        if not is_regular(state, vertex):
+            continue
+        new_edge_id = vertex_collapse(state, vertex)
+        new_edge = state.edges[new_edge_id]
+        candidates.extend(endpoint for endpoint in (new_edge.u, new_edge.v) if is_regular(state, endpoint))
+
+
 def simplify_contour_tree(
     tree: Iterable[Edge],
     values: Mapping[int, float],
@@ -91,6 +103,8 @@ def simplify_contour_tree(
         raise ValueError(f"unknown simplification mode: {mode}")
 
     state = build_mutable_tree(tree, values, measures)
+    collapse_all_regular_vertices(state)
+
     if threshold is None and target_edges is None:
         return SimplificationResult(
             edges=active_edges(state),
@@ -133,8 +147,12 @@ def simplify_contour_tree(
             break
 
         changed_vertex = leaf_prune(state, edge_id, priority=priority)
-        for incident_edge_id in active_incident_edges(state, changed_vertex):
-            push_leaf(incident_edge_id)
+        if is_regular(state, changed_vertex):
+            new_edge_id = vertex_collapse(state, changed_vertex)
+            push_leaf(new_edge_id)
+        else:
+            for incident_edge_id in active_incident_edges(state, changed_vertex):
+                push_leaf(incident_edge_id)
 
     return SimplificationResult(
         edges=active_edges(state),
@@ -329,9 +347,10 @@ def edge_priority(
 
     if mode == "measure":
         edge = state.edges[edge_id]
-        weight = edge.up_weight
-        if scalar_order(state, leaf) < scalar_order(state, interior):
+        if scalar_order(state, leaf) > scalar_order(state, interior):
             weight = edge.down_weight
+        else:
+            weight = edge.up_weight
         if weight != 0.0:
             return float(weight)
 

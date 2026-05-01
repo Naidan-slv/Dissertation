@@ -56,15 +56,55 @@ def test_threshold_zero_preserves_nonzero_height_branches():
     assert result.collapse_record == []
 
 
+def test_threshold_zero_allows_regular_vertex_collapse():
+    values = {1: 0.0, 2: 1.0, 3: 2.0}
+    tree = [(3, 2), (2, 1)]
+
+    result = simplify_contour_tree(tree, values, mode="height", threshold=0.0)
+
+    assert _edge_set(result.edges) == {(1, 3)}
+    assert result.collapse_record[0].kind == "vertex_collapse"
+    assert result.collapse_record[0].collapsed_vertex == 2
+
+
+def test_initial_regular_collapse_happens_before_leaf_pruning():
+    values = {0: 0.0, 1: 1.0, 2: 2.0, 3: 3.0, 4: 4.0}
+    tree = [(4, 3), (3, 2), (2, 0), (2, 1)]
+
+    result = simplify_contour_tree(tree, values, mode="height", threshold=float("inf"))
+
+    first_operation = result.collapse_record[-1]
+    assert first_operation.kind == "vertex_collapse"
+    assert first_operation.collapsed_vertex == 3
+
+
 def test_height_mode_prunes_smallest_prunable_leaf_first():
     values = {5: 5.0, 8: 8.0, 9: 9.0, 0: 0.0}
     tree = [(8, 5), (9, 5), (5, 0)]
 
     result = simplify_contour_tree(tree, values, mode="height", threshold=4.0)
 
-    assert _edge_set(result.edges) == {(5, 9), (0, 5)}
-    assert result.collapse_record[0].kind == "leaf_prune"
-    assert result.collapse_record[0].leaf == 8
+    assert _edge_set(result.edges) == {(0, 9)}
+    leaf_prunes = [record for record in result.collapse_record if record.kind == "leaf_prune"]
+    assert leaf_prunes[-1].leaf == 8
+
+
+def test_pruning_leaf_collapses_newly_regular_interior():
+    values = {1: 0.0, 2: 2.0, 3: 3.0, 4: 4.0}
+    tree = [(4, 2), (3, 2), (2, 1)]
+
+    result = simplify_contour_tree(
+        tree,
+        values,
+        mode="height",
+        threshold=float("inf"),
+        target_edges=1,
+    )
+
+    assert len(result.edges) == 1
+    _assert_tree(result.edges)
+    chronological_kinds = [record.kind for record in reversed(result.collapse_record)]
+    assert chronological_kinds.index("leaf_prune") < chronological_kinds.index("vertex_collapse")
 
 
 def test_target_edges_stops_simplification():
@@ -79,8 +119,24 @@ def test_target_edges_stops_simplification():
         target_edges=2,
     )
 
-    assert len(result.edges) == 2
+    assert len(result.edges) <= 2
     _assert_tree(result.edges)
+
+
+def test_target_edges_can_be_reached_by_regular_collapse():
+    values = {1: 0.0, 2: 1.0, 3: 2.0}
+    tree = [(3, 2), (2, 1)]
+
+    result = simplify_contour_tree(
+        tree,
+        values,
+        mode="height",
+        threshold=float("inf"),
+        target_edges=1,
+    )
+
+    assert len(result.edges) == 1
+    assert _edge_set(result.edges) == {(1, 3)}
 
 
 def test_simplified_tree_edge_count_never_increases():

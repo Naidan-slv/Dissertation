@@ -1,7 +1,11 @@
 """Tests for measure-ranked simplification."""
 
 from src.contour_tree_algo.measures import ArcMeasure
-from src.contour_tree_algo.simplification import simplify_contour_tree
+from src.contour_tree_algo.simplification import (
+    build_mutable_tree,
+    edge_priority,
+    simplify_contour_tree,
+)
 
 
 def _edge_set(edges):
@@ -51,6 +55,30 @@ def test_measure_mode_can_choose_different_leaf_than_height_mode():
         target_edges=2,
     )
 
-    assert height_result.collapse_record[0].leaf == 8
-    assert measure_result.collapse_record[0].leaf == 20
+    height_leaf_prunes = [record for record in height_result.collapse_record if record.kind == "leaf_prune"]
+    measure_leaf_prunes = [record for record in measure_result.collapse_record if record.kind == "leaf_prune"]
+    assert height_leaf_prunes[-1].leaf == 8
+    assert measure_leaf_prunes[-1].leaf == 20
     assert _edge_set(height_result.edges) != _edge_set(measure_result.edges)
+
+
+def test_measure_upper_leaf_priority_uses_down_weight():
+    values = {5: 5.0, 10: 10.0}
+    state = build_mutable_tree([(10, 5)], values)
+    state.edges[0].up_weight = 50.0
+    state.edges[0].down_weight = 7.0
+
+    priority = edge_priority(state, 0, mode="measure", leaf=10, interior=5)
+
+    assert priority == 7.0
+
+
+def test_measure_lower_leaf_priority_uses_up_weight():
+    values = {5: 5.0, 1: 1.0}
+    state = build_mutable_tree([(5, 1)], values)
+    state.edges[0].up_weight = 50.0
+    state.edges[0].down_weight = 7.0
+
+    priority = edge_priority(state, 0, mode="measure", leaf=1, interior=5)
+
+    assert priority == 50.0
