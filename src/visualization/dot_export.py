@@ -38,7 +38,16 @@ COLOURS = {"min": "lightblue", "max": "tomato", "saddle": "lightgrey"}
 SHAPES  = {"min": "ellipse",   "max": "ellipse",  "saddle": "diamond"}
 
 
-def ct_to_dot(supernodes, superarcs, value_fn):
+def _arc_contains_isovalue(u, v, value_fn, isovalue):
+    if isovalue is None:
+        return False
+
+    low = min(value_fn(u), value_fn(v))
+    high = max(value_fn(u), value_fn(v))
+    return low <= isovalue <= high
+
+
+def ct_to_dot(supernodes, superarcs, value_fn, isovalue=None):
     """Build a DOT-language string for the given contour tree."""
     labels = classify_nodes(supernodes, superarcs, value_fn)
 
@@ -52,7 +61,11 @@ def ct_to_dot(supernodes, superarcs, value_fn):
             f'shape={SHAPES[kind]}];'
         )
     for u, v in superarcs:
-        lines.append(f"    {u} -- {v};")
+        if _arc_contains_isovalue(u, v, value_fn, isovalue):
+            # This is only interval highlighting, not exact component mapping.
+            lines.append(f"    {u} -- {v} [color=gold penwidth=3];")
+        else:
+            lines.append(f"    {u} -- {v};")
     lines.append("}")
     return "\n".join(lines)
 
