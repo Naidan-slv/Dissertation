@@ -4,6 +4,8 @@ This is the small hand-off point between the extraction code and the future
 viewer. Keeping it plain Python means PyVista can stay optional.
 """
 
+from src.isosurface.marching_tet import extract_isosurface
+
 VIEWER_PAYLOAD_SCHEMA_VERSION = "viewer-payload-v1"
 
 
@@ -48,6 +50,13 @@ def _scalar_range_payload(scalar_range):
     return [float(low), float(high)]
 
 
+def _scalar_range(values):
+    """Return the scalar range used by the later isovalue slider."""
+    if not values:
+        return None
+    return min(values), max(values)
+
+
 def build_isosurface_payload(vertices, triangles, isovalue, dataset_name=None, scalar_range=None):
     """Return a stable viewer payload for an already-extracted isosurface."""
     points, remap = _dedupe_points(vertices)
@@ -70,3 +79,17 @@ def build_isosurface_payload(vertices, triangles, isovalue, dataset_name=None, s
         "faces": faces,
         "triangle_count": len(faces),
     }
+
+
+def extract_isosurface_payload(width, height, depth, data, isovalue, dataset_name=None):
+    """Extract an isosurface, then package it for the viewer layer."""
+    values = list(data)
+    vertices, triangles = extract_isosurface(width, height, depth, values, isovalue)
+
+    return build_isosurface_payload(
+        vertices,
+        triangles,
+        isovalue,
+        dataset_name=dataset_name,
+        scalar_range=_scalar_range(values),
+    )
