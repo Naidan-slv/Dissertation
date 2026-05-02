@@ -6,6 +6,7 @@ import pytest
 
 from src.visualization.pyvista_adapter import (
     build_isosurface_plotter,
+    build_isovalue_slider_plotter,
     payload_to_polydata,
     require_pyvista,
     save_isosurface_screenshot,
@@ -35,6 +36,7 @@ class FakePlotter:
         self.meshes = []
         self.axes_shown = False
         self.show_calls = []
+        self.slider_widgets = []
 
     def add_mesh(self, mesh, **kwargs):
         self.meshes.append((mesh, kwargs))
@@ -44,6 +46,9 @@ class FakePlotter:
 
     def show(self, **kwargs):
         self.show_calls.append(kwargs)
+
+    def add_slider_widget(self, callback, **kwargs):
+        self.slider_widgets.append((callback, kwargs))
 
 
 def test_require_pyvista_reports_missing_optional_dependency(monkeypatch):
@@ -105,3 +110,27 @@ def test_save_isosurface_screenshot_uses_off_screen_plotter(monkeypatch, tmp_pat
     assert result == str(out)
     assert fake_pyvista.plotters[0].kwargs == {"off_screen": True}
     assert fake_pyvista.plotters[0].show_calls == [{"screenshot": str(out), "auto_close": True}]
+
+
+def test_build_isovalue_slider_plotter_refreshes_surface(monkeypatch):
+    fake_pyvista = FakePyVista()
+    monkeypatch.setitem(sys.modules, "pyvista", fake_pyvista)
+
+    def payload_builder(isovalue):
+        return {
+            "points": [[0.0, 0.0, 0.0], [float(isovalue), 0.0, 0.0], [0.0, 1.0, 0.0]],
+            "faces": [[0, 1, 2]],
+        }
+
+    plotter = build_isovalue_slider_plotter(
+        payload_builder,
+        scalar_range=(0.0, 1.0),
+        initial_isovalue=0.25,
+    )
+
+    callback, slider_kwargs = plotter.slider_widgets[0]
+    callback(0.75)
+
+    assert slider_kwargs == {"rng": (0.0, 1.0), "value": 0.25, "title": "isovalue"}
+    assert plotter.meshes[-1][0]["points"][1] == [0.75, 0.0, 0.0]
+    assert plotter.meshes[-1][1]["name"] == "isosurface"
