@@ -3,6 +3,7 @@
 import sys
 
 from scripts.interactive_viewer_example import build_example_inputs, build_example_viewer
+from src.visualization.interactive_viewer import current_viewer_payload
 
 
 class FakePyVista:
@@ -49,6 +50,7 @@ def test_example_viewer_builds_without_opening_window(monkeypatch):
 
     plotter = build_example_viewer()
 
-    assert plotter.viewer_payload["dataset_name"] == "tiny-interactive-example"
-    assert plotter.viewer_payload["summary"]["active_arc_count"] == 1
+    payload = current_viewer_payload(plotter)
+    assert payload["dataset_name"] == "tiny-interactive-example"
+    assert payload["summary"]["active_arc_count"] == 1
     assert plotter.slider_widgets[0][1]["title"] == "isovalue"

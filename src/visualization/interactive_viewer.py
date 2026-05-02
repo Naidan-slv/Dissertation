@@ -9,6 +9,10 @@ from src.visualization.pyvista_adapter import build_isosurface_plotter, payload_
 from src.visualization.viewer_payload import build_viewer_payload
 
 
+def current_viewer_payload(plotter):
+    raise NotImplementedError
+
+
 def _mesh_scalar_range(mesh):
     """Return the scalar range from a project mesh."""
     values = [mesh.value(v) for v in mesh.vertices()]

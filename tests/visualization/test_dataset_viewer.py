@@ -10,6 +10,7 @@ from src.visualization.dataset_viewer import (
     build_klacansky_viewer,
     build_klacansky_viewer_inputs,
 )
+from src.visualization.interactive_viewer import current_viewer_payload
 
 
 class FakePyVista:
@@ -103,6 +104,7 @@ def test_build_klacansky_viewer_returns_slider_plotter(monkeypatch):
         contour_tree_fn=tiny_tree,
     )
 
-    assert plotter.viewer_payload["dataset_name"] == "fuel"
-    assert plotter.viewer_payload["component_mapping"] == "interval-only"
+    payload = current_viewer_payload(plotter)
+    assert payload["dataset_name"] == "fuel"
+    assert payload["component_mapping"] == "interval-only"
     assert plotter.slider_widgets[0][1]["title"] == "isovalue"

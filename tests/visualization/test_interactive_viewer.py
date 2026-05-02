@@ -5,7 +5,11 @@ import sys
 import numpy as np
 
 from src.meshes.grid_mesh_3d import GridMesh3D
-from src.visualization.interactive_viewer import build_interactive_viewer, show_interactive_viewer
+from src.visualization.interactive_viewer import (
+    build_interactive_viewer,
+    current_viewer_payload,
+    show_interactive_viewer,
+)
 
 
 class FakePyVista:
@@ -22,6 +26,13 @@ class FakePyVista:
 
 
 class FakePlotter:
+    _allowed_public_attrs = {"kwargs", "meshes", "slider_widgets", "show_calls", "axes_shown"}
+
+    def __setattr__(self, name, value):
+        if not name.startswith("_") and name not in self._allowed_public_attrs:
+            raise AttributeError(f"cannot add public attribute {name}")
+        super().__setattr__(name, value)
+
     def __init__(self, **kwargs):
         self.kwargs = kwargs
         self.meshes = []
@@ -63,10 +74,11 @@ def test_build_interactive_viewer_links_grid_surface_and_tree(monkeypatch):
     callback(0.75)
 
     assert slider_kwargs == {"rng": (0.0, 1.0), "value": 0.25, "title": "isovalue"}
-    assert plotter.viewer_payload["dataset_name"] == "tiny interactive"
-    assert plotter.viewer_payload["isovalue"] == 0.75
-    assert plotter.viewer_payload["component_mapping"] == "interval-only"
-    assert plotter.viewer_payload["contour_tree"]["edges"][0]["active_at_isovalue"] is True
+    payload = current_viewer_payload(plotter)
+    assert payload["dataset_name"] == "tiny interactive"
+    assert payload["isovalue"] == 0.75
+    assert payload["component_mapping"] == "interval-only"
+    assert payload["contour_tree"]["edges"][0]["active_at_isovalue"] is True
     assert plotter.meshes[-1][1]["name"] == "isosurface"
 
 
@@ -81,4 +93,4 @@ def test_show_interactive_viewer_calls_show_after_build(monkeypatch):
     )
 
     assert plotter.show_calls == [{}]
-    assert plotter.viewer_payload["isovalue"] == 0.5
+    assert current_viewer_payload(plotter)["isovalue"] == 0.5
