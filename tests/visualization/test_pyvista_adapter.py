@@ -92,7 +92,12 @@ def test_build_isosurface_plotter_adds_mesh_without_showing_window(monkeypatch):
 
     assert plotter is fake_pyvista.plotters[0]
     assert plotter.meshes[0][0] == {"points": payload["points"], "faces": [3, 0, 1, 2]}
-    assert plotter.meshes[0][1] == {"color": "tomato", "show_edges": True, "opacity": 0.75}
+    assert plotter.meshes[0][1] == {
+        "color": "tomato",
+        "show_edges": True,
+        "opacity": 0.75,
+        "name": "isosurface",
+    }
     assert plotter.axes_shown is True
 
 

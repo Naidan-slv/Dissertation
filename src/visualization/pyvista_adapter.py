@@ -49,7 +49,7 @@ def build_isosurface_plotter(
     pyvista = require_pyvista()
     mesh = payload_to_polydata(payload)
     plotter = pyvista.Plotter(off_screen=off_screen)
-    plotter.add_mesh(mesh, color=color, show_edges=show_edges, opacity=opacity)
+    plotter.add_mesh(mesh, color=color, show_edges=show_edges, opacity=opacity, name="isosurface")
     plotter.show_axes()
     return plotter
 
@@ -60,3 +60,23 @@ def save_isosurface_screenshot(payload, path):
     plotter = build_isosurface_plotter(payload, off_screen=True)
     plotter.show(screenshot=output_path, auto_close=True)
     return output_path
+
+
+def build_isovalue_slider_plotter(payload_builder, scalar_range, initial_isovalue):
+    """Build a plotter with an isovalue slider callback.
+
+    The callback refreshes the mesh actor but does not call ``show()``.
+    """
+    plotter = build_isosurface_plotter(payload_builder(initial_isovalue))
+
+    def update_surface(isovalue):
+        mesh = payload_to_polydata(payload_builder(isovalue))
+        plotter.add_mesh(mesh, color="tomato", show_edges=True, opacity=0.75, name="isosurface")
+
+    plotter.add_slider_widget(
+        update_surface,
+        rng=tuple(scalar_range),
+        value=float(initial_isovalue),
+        title="isovalue",
+    )
+    return plotter
