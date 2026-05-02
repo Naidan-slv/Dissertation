@@ -10,7 +10,7 @@ from src.visualization.viewer_payload import build_viewer_payload
 
 
 def current_viewer_payload(plotter):
-    raise NotImplementedError
+    return plotter._viewer_payload
 
 
 def _mesh_scalar_range(mesh):
@@ -57,11 +57,11 @@ def build_interactive_viewer(
 
     initial_payload = linked_payload(initial_isovalue)
     plotter = build_isosurface_plotter(initial_payload["isosurface"])
-    plotter.viewer_payload = initial_payload
+    plotter._viewer_payload = initial_payload
 
     def update_isovalue(isovalue):
         payload = linked_payload(isovalue)
-        plotter.viewer_payload = payload
+        plotter._viewer_payload = payload
         _refresh_isosurface(plotter, payload["isosurface"])
 
     plotter.add_slider_widget(
