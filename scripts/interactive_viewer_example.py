@@ -4,6 +4,13 @@ This uses the same 2x2x2 grid as the payload example. It is deliberately small
 so the slider/tree wiring can be checked before pointing the viewer at large data.
 """
 
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import numpy as np
 
 from src.meshes.grid_mesh_3d import GridMesh3D

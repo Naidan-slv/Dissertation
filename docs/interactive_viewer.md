@@ -23,6 +23,23 @@ python scripts/interactive_viewer_example.py
 
 The example uses a `2x2x2` `GridMesh3D` with one high corner and a one-arc contour tree. It is only meant to check the slider and payload wiring before using real datasets.
 
+## Run a Klacansky dataset viewer
+
+The Klacansky script defaults to the small `fuel` dataset:
+
+```bash
+python scripts/klacansky_viewer.py
+```
+
+You can pass another dataset key from `src/input/datasets.yaml`:
+
+```bash
+python scripts/klacansky_viewer.py nucleon --isovalue 42
+```
+
+For large datasets, contour-tree computation can still be slow. Start with
+`fuel`, `nucleon`, `marschner_lobb`, or another small volume first.
+
 ## Current limitation
 
 Active contour-tree arcs are marked with interval-only logic:
