@@ -1,0 +1,3 @@
+# Optional dependencies for the interactive PyVista viewer.
+# Base tests and contour-tree algorithms do not require these.
+pyvista>=0.45
