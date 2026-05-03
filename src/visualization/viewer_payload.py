@@ -6,6 +6,7 @@ both to agree on the same isovalue. This module keeps that wiring in one place.
 
 from src.visualization.contour_tree_payload import build_contour_tree_payload
 from src.visualization.isosurface_payload import extract_grid_mesh_payload
+from src.visualization.simplification_payload import build_simplification_payload
 
 VIEWER_PAYLOAD_SCHEMA_VERSION = "viewer-payload-v1"
 
@@ -22,7 +23,15 @@ def _summary(isovalue, isosurface, contour_tree):
     }
 
 
-def build_viewer_payload(mesh, supernodes, superarcs, isovalue, dataset_name=None, value_fn=None):
+def build_viewer_payload(
+    mesh,
+    supernodes,
+    superarcs,
+    isovalue,
+    dataset_name=None,
+    value_fn=None,
+    simplification=None,
+):
     """Return linked isosurface and contour-tree payloads for one isovalue."""
     if value_fn is None:
         value_fn = mesh.value
@@ -39,7 +48,7 @@ def build_viewer_payload(mesh, supernodes, superarcs, isovalue, dataset_name=Non
         isovalue=isovalue,
     )
 
-    return {
+    payload = {
         "schema_version": VIEWER_PAYLOAD_SCHEMA_VERSION,
         "payload_type": "combined-viewer",
         "dataset_name": dataset_name,
@@ -49,3 +58,14 @@ def build_viewer_payload(mesh, supernodes, superarcs, isovalue, dataset_name=Non
         "isosurface": isosurface,
         "contour_tree": contour_tree,
     }
+
+    if simplification is not None:
+        payload["simplification"] = build_simplification_payload(
+            supernodes,
+            superarcs,
+            value_fn,
+            isovalue=isovalue,
+            **simplification,
+        )
+
+    return payload
