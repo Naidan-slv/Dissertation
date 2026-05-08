@@ -28,8 +28,8 @@ def test_simplification_payload_records_tree_context():
     assert payload["target_edge_count"] is None
     assert payload["component_mapping"] == "interval-only"
     assert payload["original_edge_count"] == 3
-    assert payload["simplified_edge_count"] == 2
-    assert payload["collapse_record_count"] == 1
+    assert payload["simplified_edge_count"] == 1
+    assert payload["collapse_record_count"] == 2
     assert payload["active_edge_count"] == 1
     assert payload["simplified_tree"]["edges"][0]["active_at_isovalue"] is True
 
@@ -43,11 +43,13 @@ def test_simplification_payload_includes_json_friendly_collapse_records():
         threshold=1.0,
     )
 
-    record = payload["collapse_records"][0]
-    assert record["kind"] == "leaf_prune"
-    assert record["removed_edges"] == [2]
-    assert record["leaf"] == 3
-    assert json.loads(json.dumps(payload))["collapse_record_count"] == 1
+    vertex_record, leaf_record = payload["collapse_records"]
+    assert vertex_record["kind"] == "vertex_collapse"
+    assert vertex_record["collapsed_vertex"] == 1
+    assert leaf_record["kind"] == "leaf_prune"
+    assert leaf_record["removed_edges"] == [2]
+    assert leaf_record["leaf"] == 3
+    assert json.loads(json.dumps(payload))["collapse_record_count"] == 2
 
 
 def test_viewer_payload_can_include_simplification_block():
