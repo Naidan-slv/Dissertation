@@ -52,6 +52,83 @@ def test_simplification_payload_includes_json_friendly_collapse_records():
     assert json.loads(json.dumps(payload))["collapse_record_count"] == 2
 
 
+def test_simplification_payload_carries_target_edge_count():
+    payload = build_simplification_payload(
+        [0, 1, 2, 3],
+        TREE,
+        VALUES.__getitem__,
+        mode="height",
+        target_edges=2,
+    )
+
+    assert payload["target_edge_count"] == 2
+    assert payload["simplified_edge_count"] <= 2
+
+
+def test_threshold_zero_one_edge_tree_is_no_op():
+    payload = build_simplification_payload(
+        [0, 1],
+        [(0, 1)],
+        {0: 0.0, 1: 1.0}.__getitem__,
+        mode="height",
+        threshold=0.0,
+    )
+
+    assert payload["original_edge_count"] == 1
+    assert payload["simplified_edge_count"] == 1
+    assert payload["collapse_record_count"] == 0
+    assert payload["simplified_tree"]["edges"] == [
+        {
+            "source": 0,
+            "target": 1,
+            "value_range": [0.0, 1.0],
+            "active": False,
+            "active_at_isovalue": False,
+        }
+    ]
+
+
+def test_viewer_payload_simplification_block_is_json_serialisable():
+    data = np.zeros(8)
+    data[1] = 1.0
+    mesh = GridMesh3D(2, 2, 2, data)
+
+    payload = build_viewer_payload(
+        mesh=mesh,
+        supernodes=[0, 1, 2, 3],
+        superarcs=TREE,
+        value_fn=VALUES.__getitem__,
+        isovalue=0.5,
+        simplification={"mode": "height", "threshold": 1.0},
+    )
+
+    assert json.loads(json.dumps(payload))["simplification"]["collapse_record_count"] == 2
+
+
+def test_simplification_block_does_not_change_isosurface_payload():
+    data = np.zeros(8)
+    data[1] = 1.0
+    mesh = GridMesh3D(2, 2, 2, data)
+
+    plain = build_viewer_payload(
+        mesh=mesh,
+        supernodes=[0, 1, 2, 3],
+        superarcs=TREE,
+        value_fn=VALUES.__getitem__,
+        isovalue=0.5,
+    )
+    simplified = build_viewer_payload(
+        mesh=mesh,
+        supernodes=[0, 1, 2, 3],
+        superarcs=TREE,
+        value_fn=VALUES.__getitem__,
+        isovalue=0.5,
+        simplification={"mode": "height", "threshold": 1.0},
+    )
+
+    assert simplified["isosurface"] == plain["isosurface"]
+
+
 def test_viewer_payload_can_include_simplification_block():
     data = np.zeros(8)
     data[1] = 1.0
