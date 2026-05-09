@@ -7,6 +7,23 @@ The viewer code is split into two layers:
 
 This keeps the contour-tree pipeline testable without installing VTK/PyVista.
 
+## Claim boundary
+
+The viewer extracts isosurface geometry with marching tetrahedra over the
+project's Freudenthal tetrahedra. The extracted triangles are stored in a
+versioned payload before any rendering step. PyVista is only the optional
+VTK-backed renderer for that payload.
+
+Contour-tree linking is interval based. An arc is marked active when the current
+isovalue lies inside that arc's scalar interval. This follows Carr's active
+contour model for the first viewer, but it is not an exact triangle-component to
+superarc assignment.
+
+Simplification is displayed as tree context. The payload stores the simplified
+tree, active simplified arcs, and Carr-style collapse records. It does not alter
+the scalar data, does not re-extract different geometry, and does not implement
+Weber-style branch transfer functions or topology-controlled volume rendering.
+
 ## Install optional viewer dependencies
 
 From the repository root:
@@ -49,3 +66,7 @@ arc is active if low_value <= isovalue <= high_value
 ```
 
 This is useful for the MVP viewer, but it is not yet exact connected-component-to-superarc tracking.
+
+Simplification output has the same limitation. It shows how the tree changes and
+which simplified arcs are active at the chosen isovalue; it does not label each
+rendered triangle by branch.
