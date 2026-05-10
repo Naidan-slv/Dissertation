@@ -12,6 +12,8 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.contour_tree_algo.final_contour_tree import compute_unaugmented_contour_tree
 from src.input.ingest import load_raw_dataset
+from src.visualization.dot_export import ct_to_dot, save_dot
+from src.visualization.pyvista_adapter import save_isosurface_screenshot
 from src.visualization.viewer_payload import build_viewer_payload
 
 VIEWER_ASSETS_MANIFEST_SCHEMA_VERSION = "viewer-assets-manifest-v1"
@@ -48,6 +50,11 @@ def build_parser():
     parser.add_argument("--threshold", type=float, default=None)
     parser.add_argument("--output-dir", default="output/viewer")
     parser.add_argument("--no-freudenthal", action="store_true")
+    parser.add_argument(
+        "--screenshot",
+        action="store_true",
+        help="Also render an optional PyVista off-screen screenshot.",
+    )
     return parser
 
 
@@ -58,10 +65,27 @@ def asset_paths(output_dir, dataset_name):
     return (
         output_dir / f"{dataset_stem}_viewer_payload.json",
         output_dir / f"{dataset_stem}_viewer_manifest.json",
+        output_dir / f"{dataset_stem}_contour_tree.dot",
     )
 
 
-def build_asset_manifest(dataset_name, isovalue, threshold, payload_path, manifest_path, command):
+def screenshot_path(output_dir, dataset_name):
+    """Return the optional isosurface screenshot path for a dataset export."""
+    output_dir = Path(output_dir)
+    dataset_stem = _safe_dataset_name(dataset_name)
+    return output_dir / f"{dataset_stem}_isosurface.png"
+
+
+def build_asset_manifest(
+    dataset_name,
+    isovalue,
+    threshold,
+    payload_path,
+    manifest_path,
+    command,
+    dot_path=None,
+    screenshot_path=None,
+):
     """Return JSON-serialisable manifest metadata for an export."""
     return {
         "schema_version": VIEWER_ASSETS_MANIFEST_SCHEMA_VERSION,
@@ -72,6 +96,8 @@ def build_asset_manifest(dataset_name, isovalue, threshold, payload_path, manife
         "outputs": {
             "viewer_payload": str(payload_path),
             "manifest": str(manifest_path),
+            "dot_graph": None if dot_path is None else str(dot_path),
+            "screenshot": None if screenshot_path is None else str(screenshot_path),
         },
         "command": list(command) if command is not None else None,
         "paper_basis": {
@@ -89,6 +115,8 @@ def export_viewer_assets(
     threshold=None,
     output_dir="output/viewer",
     freudenthal=True,
+    screenshot=False,
+    screenshot_fn=save_isosurface_screenshot,
     loader=load_raw_dataset,
     contour_tree_fn=compute_unaugmented_contour_tree,
     command=None,
@@ -106,7 +134,7 @@ def export_viewer_assets(
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    payload_path, manifest_path = asset_paths(output_dir, dataset_name)
+    payload_path, manifest_path, dot_path = asset_paths(output_dir, dataset_name)
 
     payload = build_viewer_payload(
         mesh=mesh,
@@ -116,6 +144,17 @@ def export_viewer_assets(
         dataset_name=dataset_name,
         simplification=simplification,
     )
+    dot_text = ct_to_dot(
+        list(supernodes),
+        list(superarcs),
+        mesh.value,
+        isovalue=float(isovalue),
+    )
+    screenshot_output_path = None
+    if screenshot:
+        screenshot_output_path = screenshot_path(output_dir, dataset_name)
+        screenshot_fn(payload["isosurface"], screenshot_output_path)
+
     manifest = build_asset_manifest(
         dataset_name=dataset_name,
         isovalue=isovalue,
@@ -123,12 +162,18 @@ def export_viewer_assets(
         payload_path=payload_path,
         manifest_path=manifest_path,
         command=command,
+        dot_path=dot_path,
+        screenshot_path=screenshot_output_path,
     )
 
     _write_json(payload_path, payload)
+    save_dot(dot_text, str(dot_path))
     _write_json(manifest_path, manifest)
 
-    return {"viewer_payload": payload_path, "manifest": manifest_path}
+    result = {"viewer_payload": payload_path, "manifest": manifest_path, "dot_graph": dot_path}
+    if screenshot_output_path is not None:
+        result["screenshot"] = screenshot_output_path
+    return result
 
 
 def main(argv=None):
@@ -141,6 +186,7 @@ def main(argv=None):
         threshold=args.threshold,
         output_dir=args.output_dir,
         freudenthal=not args.no_freudenthal,
+        screenshot=args.screenshot,
         command=["scripts/export_viewer_assets.py", *raw_args],
     )
 

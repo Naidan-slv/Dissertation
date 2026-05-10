@@ -31,13 +31,15 @@ def test_parser_defaults_to_fuel_export():
     assert args.threshold is None
     assert args.output_dir == "output/viewer"
     assert args.no_freudenthal is False
+    assert args.screenshot is False
 
 
 def test_asset_paths_are_dataset_specific(tmp_path):
-    payload_path, manifest_path = asset_paths(tmp_path, "fuel")
+    payload_path, manifest_path, dot_path = asset_paths(tmp_path, "fuel")
 
     assert payload_path == tmp_path / "fuel_viewer_payload.json"
     assert manifest_path == tmp_path / "fuel_viewer_manifest.json"
+    assert dot_path == tmp_path / "fuel_contour_tree.dot"
 
 
 def test_export_viewer_assets_writes_payload_and_manifest(tmp_path):
@@ -53,10 +55,16 @@ def test_export_viewer_assets_writes_payload_and_manifest(tmp_path):
 
     payload_path = tmp_path / "tiny_viewer_payload.json"
     manifest_path = tmp_path / "tiny_viewer_manifest.json"
-    assert result == {"viewer_payload": payload_path, "manifest": manifest_path}
+    dot_path = tmp_path / "tiny_contour_tree.dot"
+    assert result == {
+        "viewer_payload": payload_path,
+        "manifest": manifest_path,
+        "dot_graph": dot_path,
+    }
 
     payload = json.loads(payload_path.read_text())
     manifest = json.loads(manifest_path.read_text())
+    dot_text = dot_path.read_text()
 
     assert payload["dataset_name"] == "tiny"
     assert payload["isovalue"] == 0.5
@@ -72,10 +80,75 @@ def test_export_viewer_assets_writes_payload_and_manifest(tmp_path):
     assert manifest["outputs"] == {
         "viewer_payload": str(payload_path),
         "manifest": str(manifest_path),
+        "dot_graph": str(dot_path),
+        "screenshot": None,
     }
     assert manifest["command"] == ["export", "tiny"]
     assert "Carr" in manifest["paper_basis"]["contour_tree"]
     assert "marching tetrahedra" in manifest["paper_basis"]["isosurface"]
+    assert "graph contour_tree" in dot_text
+    assert "color=gold" in dot_text
+
+
+def test_export_viewer_assets_dot_uses_interval_highlighting(tmp_path):
+    export_viewer_assets(
+        "tiny",
+        isovalue=0.5,
+        output_dir=tmp_path,
+        loader=lambda *_args, **_kwargs: tiny_grid_mesh(),
+        contour_tree_fn=tiny_tree,
+    )
+
+    dot_text = (tmp_path / "tiny_contour_tree.dot").read_text()
+
+    assert "0 -- 1 [color=gold penwidth=3];" in dot_text
+
+
+def test_export_viewer_assets_can_write_optional_screenshot(tmp_path):
+    screenshot_calls = []
+
+    def fake_screenshot(payload, path):
+        screenshot_calls.append((payload["dataset_name"], path))
+        path.write_text("fake image")
+        return path
+
+    result = export_viewer_assets(
+        "tiny",
+        isovalue=0.5,
+        output_dir=tmp_path,
+        screenshot=True,
+        screenshot_fn=fake_screenshot,
+        loader=lambda *_args, **_kwargs: tiny_grid_mesh(),
+        contour_tree_fn=tiny_tree,
+    )
+
+    screenshot_path = tmp_path / "tiny_isosurface.png"
+    manifest = json.loads((tmp_path / "tiny_viewer_manifest.json").read_text())
+
+    assert result["screenshot"] == screenshot_path
+    assert screenshot_path.read_text() == "fake image"
+    assert screenshot_calls == [("tiny", screenshot_path)]
+    assert manifest["outputs"]["screenshot"] == str(screenshot_path)
+
+
+def test_export_viewer_assets_screenshot_dependency_errors_are_clear(tmp_path):
+    def missing_renderer(_payload, _path):
+        raise RuntimeError("PyVista is optional for this project")
+
+    try:
+        export_viewer_assets(
+            "tiny",
+            isovalue=0.5,
+            output_dir=tmp_path,
+            screenshot=True,
+            screenshot_fn=missing_renderer,
+            loader=lambda *_args, **_kwargs: tiny_grid_mesh(),
+            contour_tree_fn=tiny_tree,
+        )
+    except RuntimeError as exc:
+        assert "PyVista is optional" in str(exc)
+    else:
+        raise AssertionError("expected optional dependency error")
 
 
 def test_export_viewer_assets_uses_midpoint_isovalue_by_default(tmp_path):
@@ -110,6 +183,7 @@ def test_main_passes_cli_options_to_exporter(monkeypatch):
             "threshold": 3.0,
             "output_dir": "out",
             "freudenthal": False,
+            "screenshot": False,
             "command": [
                 "scripts/export_viewer_assets.py",
                 "nucleon",
@@ -122,4 +196,23 @@ def test_main_passes_cli_options_to_exporter(monkeypatch):
                 "--no-freudenthal",
             ],
         }
+    ]
+
+
+def test_main_passes_screenshot_option_to_exporter(monkeypatch):
+    calls = []
+
+    def fake_export(**kwargs):
+        calls.append(kwargs)
+        return {"viewer_payload": "payload.json", "manifest": "manifest.json"}
+
+    monkeypatch.setattr("scripts.export_viewer_assets.export_viewer_assets", fake_export)
+
+    main(["fuel", "--screenshot"])
+
+    assert calls[0]["screenshot"] is True
+    assert calls[0]["command"] == [
+        "scripts/export_viewer_assets.py",
+        "fuel",
+        "--screenshot",
     ]

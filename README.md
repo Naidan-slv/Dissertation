@@ -236,13 +236,21 @@ pip install -r requirements.txt
 | `python scripts/run_full_pipeline.py fuel` | Full pipeline with detailed output for one dataset |
 | `python scripts/run_full_pipeline.py --file volume.raw --shape 64 64 64 --dtype uint8` | Load and process a custom `.raw` file |
 | `python scripts/viewer_payload_example.py` | Build a tiny linked viewer payload without opening a GUI |
+| `python scripts/export_viewer_assets.py fuel --threshold 5` | Export viewer JSON, manifest, and DOT graph assets |
+| `python scripts/export_viewer_assets.py fuel --screenshot` | Also request an optional PyVista screenshot |
 | `python scripts/klacansky_viewer.py fuel --isovalue 42` | Open the optional PyVista viewer for a Klacansky dataset |
+| `python -m src.benchmarks.timing_plots` | Generate serial Python timing JSON/CSV files and plots under `output/` |
+| `python scripts/ttk_comparison.py --project-nodes 4 --project-arcs 3 --ttk-summary ttk.txt` | Compare project counts with a saved TTK-style summary |
 
-Viewer commands require the optional viewer dependency file:
+Interactive viewing and screenshot export require the optional viewer dependency file:
 
 ```bash
 pip install -r requirements-viewer.txt
 ```
+
+Generated evidence files are ignored by git. Regenerate them with the scripts
+above, or copy selected final figures into a separate dissertation-assets folder
+if they must be archived outside the source history.
 
 ### Save Results
 
@@ -396,6 +404,24 @@ The simplification output is a `SimplificationResult` containing the simplified
 edges, removed edge ids, and collapse records. The viewer later packages this as
 a simplification payload.
 
+### TTK comparison fallback
+
+`scripts/ttk_comparison.py` is a fallback comparison helper for saved TTK-style
+text or CSV summaries. It compares only contour-tree node and arc counts. It is
+not a live TTK validation unless TTK is installed and a live TTK run has actually
+been performed.
+
+The parser deliberately distinguishes input mesh vertices from contour-tree
+nodes: labels such as `vertices` are ignored, while labels such as
+`critical_points`, `supernodes`, `nodes`, or `tree nodes` are accepted.
+
+### Scalability outputs
+
+`src/benchmarks/timing_plots.py` reports serial Python timings for selected
+datasets. The scalability CSV records dataset name, vertex count, reduced tree
+size, tree ratio, join/split/merge/reduce timings, threshold, and notes. It does
+not claim parallel speedups or TTK performance parity.
+
 ---
 
 ## Isosurface Extraction and Viewer
@@ -435,6 +461,16 @@ isosurface geometry; it shows how the contour tree changes after simplification.
 `PolyData`. `src/visualization/interactive_viewer.py` wires that into a simple
 isovalue slider. `src/visualization/dot_export.py` exports Graphviz DOT text for
 tree inspection, with active arcs highlighted when an isovalue is supplied.
+
+`scripts/export_viewer_assets.py` writes a repeatable asset bundle for a dataset:
+
+- linked viewer payload JSON
+- manifest JSON with command, output paths, paper-basis metadata, and
+   `component_mapping = "interval-only"`
+- Graphviz DOT contour-tree graph
+- optional PyVista screenshot when `--screenshot` is supplied
+
+The screenshot path is optional because PyVista/VTK is not a core dependency.
 
 The current viewer marks arcs by scalar interval only:
 
@@ -494,6 +530,8 @@ Diss Code/
 ├── scripts/
 │   ├── results_table.py
 │   ├── run_full_pipeline.py
+│   ├── export_viewer_assets.py
+│   ├── ttk_comparison.py
 │   ├── viewer_payload_example.py
 │   ├── interactive_viewer_example.py
 │   └── klacansky_viewer.py
