@@ -20,7 +20,12 @@ def _normalise_metric(raw_key):
     key = key.replace("_", " ").replace("-", " ")
     key = re.sub(r"\s+", " ", key).strip()
 
-    if "critical point" in key or "vertex" in key or "vertices" in key or "node" in key:
+    if (
+        "critical point" in key
+        or "supernode" in key
+        or "super node" in key
+        or key in {"nodes", "node count", "tree nodes", "tree node count"}
+    ):
         return "nodes"
     if "superarc" in key or "super arc" in key or "arc" in key or "edge" in key:
         return "arcs"
