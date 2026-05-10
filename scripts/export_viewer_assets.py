@@ -12,6 +12,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.contour_tree_algo.final_contour_tree import compute_unaugmented_contour_tree
 from src.input.ingest import load_raw_dataset
+from src.visualization.dot_export import ct_to_dot, save_dot
 from src.visualization.viewer_payload import build_viewer_payload
 
 VIEWER_ASSETS_MANIFEST_SCHEMA_VERSION = "viewer-assets-manifest-v1"
@@ -58,10 +59,20 @@ def asset_paths(output_dir, dataset_name):
     return (
         output_dir / f"{dataset_stem}_viewer_payload.json",
         output_dir / f"{dataset_stem}_viewer_manifest.json",
+        output_dir / f"{dataset_stem}_contour_tree.dot",
     )
 
 
-def build_asset_manifest(dataset_name, isovalue, threshold, payload_path, manifest_path, command):
+def build_asset_manifest(
+    dataset_name,
+    isovalue,
+    threshold,
+    payload_path,
+    manifest_path,
+    command,
+    dot_path=None,
+    screenshot_path=None,
+):
     """Return JSON-serialisable manifest metadata for an export."""
     return {
         "schema_version": VIEWER_ASSETS_MANIFEST_SCHEMA_VERSION,
@@ -72,6 +83,8 @@ def build_asset_manifest(dataset_name, isovalue, threshold, payload_path, manife
         "outputs": {
             "viewer_payload": str(payload_path),
             "manifest": str(manifest_path),
+            "dot_graph": None if dot_path is None else str(dot_path),
+            "screenshot": None if screenshot_path is None else str(screenshot_path),
         },
         "command": list(command) if command is not None else None,
         "paper_basis": {
@@ -106,7 +119,7 @@ def export_viewer_assets(
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    payload_path, manifest_path = asset_paths(output_dir, dataset_name)
+    payload_path, manifest_path, dot_path = asset_paths(output_dir, dataset_name)
 
     payload = build_viewer_payload(
         mesh=mesh,
@@ -116,6 +129,12 @@ def export_viewer_assets(
         dataset_name=dataset_name,
         simplification=simplification,
     )
+    dot_text = ct_to_dot(
+        list(supernodes),
+        list(superarcs),
+        mesh.value,
+        isovalue=float(isovalue),
+    )
     manifest = build_asset_manifest(
         dataset_name=dataset_name,
         isovalue=isovalue,
@@ -123,12 +142,14 @@ def export_viewer_assets(
         payload_path=payload_path,
         manifest_path=manifest_path,
         command=command,
+        dot_path=dot_path,
     )
 
     _write_json(payload_path, payload)
+    save_dot(dot_text, str(dot_path))
     _write_json(manifest_path, manifest)
 
-    return {"viewer_payload": payload_path, "manifest": manifest_path}
+    return {"viewer_payload": payload_path, "manifest": manifest_path, "dot_graph": dot_path}
 
 
 def main(argv=None):
