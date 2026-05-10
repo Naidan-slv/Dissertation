@@ -57,6 +57,29 @@ python scripts/klacansky_viewer.py nucleon --isovalue 42
 For large datasets, contour-tree computation can still be slow. Start with
 `fuel`, `nucleon`, `marschner_lobb`, or another small volume first.
 
+## Export repeatable viewer assets
+
+For dissertation evidence or debugging, export the non-GUI asset bundle:
+
+```bash
+python scripts/export_viewer_assets.py fuel --threshold 5 --output-dir output/viewer
+```
+
+This writes:
+
+- a linked viewer payload JSON file
+- a manifest JSON file recording command, outputs, paper-basis metadata, and `component_mapping = "interval-only"`
+- a Graphviz DOT contour-tree graph with interval-active arcs highlighted
+
+Screenshots are optional because PyVista/VTK is not a core dependency:
+
+```bash
+python scripts/export_viewer_assets.py fuel --threshold 5 --screenshot
+```
+
+If PyVista or off-screen rendering is unavailable, rerun without `--screenshot`.
+The JSON and DOT assets do not require PyVista.
+
 ## Current limitation
 
 Active contour-tree arcs are marked with interval-only logic:
