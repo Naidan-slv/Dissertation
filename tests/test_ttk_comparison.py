@@ -25,11 +25,38 @@ superarcs,3
 
 
 def test_parse_ttk_summary_text_counts():
-    text = """[ttkContourForests] Number of vertices: 5
+    text = """[ttkContourForests] Number of critical points: 5
 [ttkContourForests] Number of arcs: 4
 """
 
     assert parse_ttk_summary(text) == {"nodes": 5, "arcs": 4}
+
+
+def test_parse_ttk_summary_ignores_input_vertices():
+    text = """[ttkContourForests] Number of vertices: 262144
+[ttkContourForests] Number of critical points: 344
+[ttkContourForests] Number of arcs: 343
+"""
+
+    assert parse_ttk_summary(text) == {"nodes": 344, "arcs": 343}
+
+
+def test_parse_ttk_summary_requires_tree_node_metric():
+    text = """[ttkContourForests] Number of vertices: 262144
+[ttkContourForests] Number of arcs: 343
+"""
+
+    with pytest.raises(ValueError, match="nodes"):
+        parse_ttk_summary(text)
+
+
+def test_parse_ttk_summary_accepts_supernodes_label():
+    text = """metric,value
+supernodes,9
+superarcs,8
+"""
+
+    assert parse_ttk_summary(text) == {"nodes": 9, "arcs": 8}
 
 
 def test_load_ttk_summary_reads_saved_file(tmp_path):
