@@ -16,3 +16,10 @@ build/
 __pycache__/
 *.py[cod]
 *.pyo
+
+# Local/generated files
+.DS_Store
+*.dot
+*.png
+*.docx
+output/

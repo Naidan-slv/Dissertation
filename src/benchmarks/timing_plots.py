@@ -10,9 +10,46 @@ Usage:
 """
 
 import json
+import csv
 import os
 import time
 import sys
+
+
+SCALABILITY_CSV_FIELDS = [
+    "dataset",
+    "n_vertices",
+    "n_supernodes",
+    "n_superarcs",
+    "tree_ratio",
+    "t_load",
+    "t_join",
+    "t_split",
+    "t_merge",
+    "t_reduce",
+    "t_total",
+    "threshold",
+    "notes",
+]
+
+
+def _ensure_parent_dir(path):
+    parent = os.path.dirname(str(path))
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+
+
+def _result_value(result, *keys, default=None):
+    for key in keys:
+        if key in result:
+            return result[key]
+    return default
+
+
+def _tree_ratio(n_supernodes, n_vertices):
+    if n_vertices == 0:
+        return 0.0
+    return n_supernodes / n_vertices
 
 
 def collect_timings(max_verts=2_100_000, freudenthal=True):
@@ -67,6 +104,7 @@ def collect_timings(max_verts=2_100_000, freudenthal=True):
                 "vertices": n_verts,
                 "supernodes": len(supernodes),
                 "superarcs": len(superarcs),
+                "tree_ratio": round(_tree_ratio(len(supernodes), n_verts), 8),
                 "t_load": round(t_load, 4),
                 "t_join": round(t_join, 4),
                 "t_split": round(t_split, 4),
@@ -154,9 +192,76 @@ def plot_phase_breakdown(results, out_path="output/phase_breakdown.png"):
     print(f"  Saved {out_path}")
 
 
+def scalability_csv_rows(results, threshold=None, notes=""):
+    """Return benchmark rows using the dissertation scalability CSV schema."""
+    rows = []
+    for result in results:
+        n_vertices = int(_result_value(result, "n_vertices", "n_verts", "vertices"))
+        n_supernodes = int(_result_value(result, "n_supernodes", "supernodes"))
+        n_superarcs = int(_result_value(result, "n_superarcs", "superarcs"))
+        rows.append({
+            "dataset": _result_value(result, "dataset", "name"),
+            "n_vertices": n_vertices,
+            "n_supernodes": n_supernodes,
+            "n_superarcs": n_superarcs,
+            "tree_ratio": _tree_ratio(n_supernodes, n_vertices),
+            "t_load": _result_value(result, "t_load", default=0.0),
+            "t_join": _result_value(result, "t_join", default=0.0),
+            "t_split": _result_value(result, "t_split", default=0.0),
+            "t_merge": _result_value(result, "t_merge", default=0.0),
+            "t_reduce": _result_value(result, "t_reduce", default=0.0),
+            "t_total": _result_value(result, "t_total", default=0.0),
+            "threshold": threshold,
+            "notes": notes,
+        })
+    return rows
+
+
+def save_scalability_csv(results, out_path="output/scalability_results.csv", threshold=None, notes=""):
+    """Write benchmark results as a reproducible scalability CSV."""
+    rows = scalability_csv_rows(results, threshold=threshold, notes=notes)
+    _ensure_parent_dir(out_path)
+    with open(out_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=SCALABILITY_CSV_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def plot_tree_ratio(results, out_path="output/tree_ratio.png"):
+    """Bar chart of reduced-tree size as critical-points / vertices."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    results = sorted(results, key=lambda r: _result_value(r, "n_vertices", "n_verts", "vertices"))
+    rows = scalability_csv_rows(results)
+    names = [row["dataset"] for row in rows]
+    ratios = [row["tree_ratio"] for row in rows]
+    vertices = [row["n_vertices"] for row in rows]
+    labels = [f"{name}\n({n:,})" for name, n in zip(names, vertices)]
+
+    fig, ax = plt.subplots(figsize=(12, 6))
+    bars = ax.bar(range(len(rows)), ratios, color="seagreen", edgecolor="white")
+    for bar, ratio in zip(bars, ratios):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height(),
+                f"{ratio:.4f}", ha="center", va="bottom", fontsize=8)
+
+    ax.set_xticks(range(len(rows)))
+    ax.set_xticklabels(labels, fontsize=8, rotation=45, ha="right")
+    ax.set_ylabel("Tree ratio (critical points / vertices)")
+    ax.set_title("Reduced Contour Tree Size vs Dataset Size")
+    ax.grid(axis="y", ls="--", alpha=0.4)
+    fig.tight_layout()
+
+    _ensure_parent_dir(out_path)
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    print(f"  Saved {out_path}")
+
+
 def save_results_json(results, out_path="output/timing_results.json"):
     """Dump results list to JSON for reproducibility."""
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    _ensure_parent_dir(out_path)
     with open(out_path, "w") as f:
         json.dump(results, f, indent=2)
 
@@ -223,6 +328,8 @@ def plot_python_vs_cpp(py_results, cpp_json_path="output/cpp_timing_results.json
 if __name__ == "__main__":
     results = collect_timings()
     save_results_json(results)
+    save_scalability_csv(results)
     plot_total_time_vs_vertices(results)
     plot_phase_breakdown(results)
+    plot_tree_ratio(results)
     print(f"Done -- {len(results)} datasets benchmarked.")

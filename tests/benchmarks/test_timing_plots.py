@@ -6,12 +6,17 @@ the plotting and JSON export logic.
 """
 
 import json
+import csv
 import pytest
 from src.benchmarks.timing_plots import (
     collect_timings,
     plot_total_time_vs_vertices,
     plot_phase_breakdown,
+    plot_tree_ratio,
     save_results_json,
+    save_scalability_csv,
+    scalability_csv_rows,
+    SCALABILITY_CSV_FIELDS,
 )
 
 
@@ -60,6 +65,35 @@ class TestSaveResultsJson:
         assert out.exists()
 
 
+class TestScalabilityCsv:
+
+    def test_rows_include_schema_and_tree_ratio(self):
+        rows = scalability_csv_rows(FAKE_RESULTS, threshold=0.5, notes="smoke")
+
+        assert list(rows[0].keys()) == SCALABILITY_CSV_FIELDS
+        assert rows[0]["dataset"] == "small"
+        assert rows[0]["n_vertices"] == 1000
+        assert rows[0]["n_supernodes"] == 12
+        assert rows[0]["n_superarcs"] == 11
+        assert rows[0]["tree_ratio"] == pytest.approx(12 / 1000)
+        assert rows[0]["threshold"] == 0.5
+        assert rows[0]["notes"] == "smoke"
+
+    def test_save_scalability_csv_writes_header_and_rows(self, tmp_path):
+        out = tmp_path / "scalability.csv"
+
+        save_scalability_csv(FAKE_RESULTS, str(out), threshold=None, notes="baseline")
+
+        with out.open() as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+
+        assert reader.fieldnames == SCALABILITY_CSV_FIELDS
+        assert rows[0]["dataset"] == "small"
+        assert rows[0]["threshold"] == ""
+        assert rows[0]["notes"] == "baseline"
+
+
 class TestPlotTotalTime:
 
     def test_creates_png(self, tmp_path):
@@ -80,6 +114,15 @@ class TestPlotPhaseBreakdown:
         out = tmp_path / "phases.png"
         plot_phase_breakdown(FAKE_RESULTS, str(out))
         assert out.exists()
+
+
+class TestPlotTreeRatio:
+
+    def test_creates_png(self, tmp_path):
+        out = tmp_path / "tree_ratio.png"
+        plot_tree_ratio(FAKE_RESULTS, str(out))
+        assert out.exists()
+        assert out.stat().st_size > 1000
         assert out.stat().st_size > 1000
 
     def test_creates_parent_dirs(self, tmp_path):

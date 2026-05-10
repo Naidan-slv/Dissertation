@@ -68,6 +68,12 @@ class TestCtToDot:
         assert "tomato" in dot
         assert "lightgrey" in dot
 
+    def test_active_arc_is_highlighted_for_isovalue(self):
+        dot = ct_to_dot(Y_NODES, Y_ARCS, Y_VALS.get, isovalue=7)
+
+        assert "2 -- 3 [color=gold penwidth=3];" in dot
+        assert "0 -- 2;" in dot
+
 
 class TestSaveDot:
 
