@@ -12,6 +12,7 @@ Implementing the Carr et al. (2003) contour tree algorithm for volumetric scalar
 - [Meshes in This Project](#meshes-in-this-project-and-why-they-exist)
 - [How Everything Fits Together](#how-everything-fits-together)
 - [How to Run](#how-to-run-the-code)
+- [Dataset Files](#dataset-files-and-attribution)
 - [Critical Points & Super-arcs](#critical-points--super-arcs-explained)
 - [Pipeline Overview](#complete-pipeline-workflow)
 - [Advanced Features](#advanced-features)
@@ -253,6 +254,75 @@ pip install -r requirements-viewer.txt
 Generated evidence files are ignored by git. Regenerate them with the scripts
 above, or copy selected final figures into a separate dissertation-assets folder
 if they must be archived outside the source history.
+
+### Dataset files and attribution
+
+The raw volumes used by this project come from Pavol Klacansky's Open Scientific
+Visualization Datasets collection:
+
+- Open SciVis page: <http://klacansky.com/open-scivis-datasets/>
+- Open SciVis metadata: <http://klacansky.com/open-scivis-datasets/datasets.json>
+- Local manifest used by the loader: `src/input/datasets.yaml`
+- Local data folder expected by the loader: `datasets/klacansky/`
+
+The repository keeps the smaller configured raw volumes locally. Larger raw
+volumes can be installed when needed by downloading the original `.raw` file
+from Open SciVis and placing it in `datasets/klacansky/` with the same file name
+used in `src/input/datasets.yaml`.
+
+For example, the `fuel` entry expects:
+
+```text
+datasets/klacansky/fuel_64x64x64_uint8.raw
+```
+
+Each entry in `src/input/datasets.yaml` contains:
+
+| Field | Meaning |
+|---|---|
+| `path` | Path to the `.raw` file, relative to the repository root. |
+| `shape_whd` | Dimensions as `[width, height, depth]`, matching the Open SciVis size and file name. |
+| `dtype` | NumPy dtype string such as `uint8`, `uint16`, `int16` or `float32`. |
+| `category` | Descriptive category used in reports/manifests. It is not used by the algorithm. |
+
+The raw stream is interpreted in C-style order as `array[z][y][x]`, so `x`
+changes fastest, then `y`, then `z`. If a configured raw file is not present,
+the loader raises `FileNotFoundError`.
+
+Klacansky/Open SciVis is the place this project obtained the volumes from. The
+individual datasets were not all created by Klacansky, so the original Open
+SciVis acknowledgements are preserved below.
+
+| Dataset key | Source file | Role | Original acknowledgement / citation note |
+|---|---|---|---|
+| `aneurism` | <http://klacansky.com/open-scivis-datasets/aneurism/aneurism_256x256x256_uint8.raw> | 15-dataset comparison | volvis.org and Philips Research, Hamburg, Germany |
+| `blunt_fin` | <http://klacansky.com/open-scivis-datasets/blunt_fin/blunt_fin_256x128x64_uint8.raw> | viewer example | NASA Advanced Supercomputing Division, USA |
+| `bonsai` | <http://klacansky.com/open-scivis-datasets/bonsai/bonsai_256x256x256_uint8.raw> | 15-dataset comparison | volvis.org and S. Roettger, VIS, University of Stuttgart |
+| `boston_teapot` | <http://klacansky.com/open-scivis-datasets/boston_teapot/boston_teapot_256x256x178_uint8.raw> | 15-dataset comparison | volvis.org and Terarecon Inc, MERL, Brigham and Women's Hospital |
+| `carp` | <http://klacansky.com/open-scivis-datasets/carp/carp_256x256x512_uint16.raw> | optional local dataset | Michael Scheuring, Computer Graphics Group, University of Erlangen, Germany |
+| `csafe_heptane` | <http://klacansky.com/open-scivis-datasets/csafe_heptane/csafe_heptane_302x302x302_uint8.raw> | optional local dataset | The University of Utah Center for the Simulation of Accidental Fires and Explosions |
+| `engine` | <http://klacansky.com/open-scivis-datasets/engine/engine_256x256x128_uint8.raw> | 15-dataset comparison | volvis.org and General Electric |
+| `foot` | <http://klacansky.com/open-scivis-datasets/foot/foot_256x256x256_uint8.raw> | 15-dataset comparison | volvis.org and Philips Research, Hamburg, Germany |
+| `frog` | <http://klacansky.com/open-scivis-datasets/frog/frog_256x256x44_uint8.raw> | viewer example | Lawrence Berkeley Laboratory, USA |
+| `fuel` | <http://klacansky.com/open-scivis-datasets/fuel/fuel_64x64x64_uint8.raw> | 15-dataset comparison and examples | volvis.org and SFB 382 of the German Research Council (DFG) |
+| `hydrogen_atom` | <http://klacansky.com/open-scivis-datasets/hydrogen_atom/hydrogen_atom_128x128x128_uint8.raw> | 15-dataset comparison and viewer example | volvis.org and SFB 382 of the German Research Council (DFG) |
+| `lobster` | <http://klacansky.com/open-scivis-datasets/lobster/lobster_301x324x56_uint8.raw> | 15-dataset comparison | volvis.org and VolVis distribution of SUNY Stony Brook, NY, USA |
+| `marschner_lobb` | <http://klacansky.com/open-scivis-datasets/marschner_lobb/marschner_lobb_41x41x41_uint8.raw> | 15-dataset comparison and examples | volvis.org and Marschner and Lobb |
+| `mri_ventricles` | <http://klacansky.com/open-scivis-datasets/mri_ventricles/mri_ventricles_256x256x124_uint8.raw> | optional local dataset | volvis.org and Dirk Bartz, VCM, University of Tübingen, Germany |
+| `mri_woman` | <http://klacansky.com/open-scivis-datasets/mri_woman/mri_woman_256x256x109_uint16.raw> | optional local dataset | Siemens Medical Systems, Inc., Iselin, NJ, USA |
+| `mrt_angio` | <http://klacansky.com/open-scivis-datasets/mrt_angio/mrt_angio_416x512x112_uint16.raw> | optional local dataset | volvis.org and Özlem Gürvit, Institute for Neuroradiology, Frankfurt, Germany |
+| `neghip` | <http://klacansky.com/open-scivis-datasets/neghip/neghip_64x64x64_uint8.raw> | 15-dataset comparison | volvis.org and VolVis distribution of SUNY Stony Brook, NY, USA. Open SciVis also supplies the VolVis paper citation: Avila et al., “VolVis: A Diversified System for Volume Research and Development”, Proceedings Visualization '94, DOI `10.1109/VISUAL.1994.346340`. |
+| `neocortical_layer_1_axons` | <http://klacansky.com/open-scivis-datasets/neocortical_layer_1_axons/neocortical_layer_1_axons_1464x1033x76_uint8.raw> | install locally if needed | V. De Paola, MRC Clinical Sciences Center, Imperial College London. Open SciVis also supplies the article citation: De Paola et al., “Cell Type-Specific Structural Plasticity of Axonal Branches and Boutons in the Adult Neocortex”, Neuron 49(6), 2006, DOI `10.1016/j.neuron.2006.02.017`. |
+| `nucleon` | <http://klacansky.com/open-scivis-datasets/nucleon/nucleon_41x41x41_uint8.raw> | 15-dataset comparison and examples | volvis.org and SFB 382 of the German Research Council (DFG) |
+| `pancreas` | <http://klacansky.com/open-scivis-datasets/pancreas/pancreas_240x512x512_int16.raw> | install locally if needed | Roth HR, Lu L, Farag A, Shin H-C, Liu J, Turkbey EB, Summers RM. DeepOrgan: Multi-level Deep Convolutional Networks for Automated Pancreas Segmentation. MICCAI 2015, LNCS 9349, pp. 556--564. |
+| `shockwave` | <http://klacansky.com/open-scivis-datasets/shockwave/shockwave_64x64x512_uint8.raw> | 15-dataset comparison | volvis.org |
+| `silicium` | <http://klacansky.com/open-scivis-datasets/silicium/silicium_98x34x34_uint8.raw> | 15-dataset comparison | volvis.org and VolVis distribution of SUNY Stony Brook, NY, USA. Open SciVis also supplies the VolVis paper citation: Avila et al., “VolVis: A Diversified System for Volume Research and Development”, Proceedings Visualization '94, DOI `10.1109/VISUAL.1994.346340`. |
+| `skull` | <http://klacansky.com/open-scivis-datasets/skull/skull_256x256x256_uint8.raw> | 15-dataset comparison and viewer example | volvis.org and Siemens Medical Solutions, Forchheim, Germany |
+| `statue_leg` | <http://klacansky.com/open-scivis-datasets/statue_leg/statue_leg_341x341x93_uint8.raw> | 15-dataset comparison | volvis.org and German Federal Institute for Material Research and Testing (BAM), Berlin, Germany |
+| `stent` | <http://klacansky.com/open-scivis-datasets/stent/stent_512x512x174_uint16.raw> | optional local dataset | volvis.org and Michael Meißner, Viatronix Inc., USA |
+| `tacc_turbulence` | <http://klacansky.com/open-scivis-datasets/tacc_turbulence/tacc_turbulence_256x256x256_float32.raw> | optional local dataset | Dataset provided by Gregory D. Abram and Gregory P. Johnson, Texas Advanced Computing Center, The University of Texas at Austin. Simulation by Diego A. Donzis, Texas A&M University, and P. K. Yeung, Georgia Tech. |
+| `tooth` | <http://klacansky.com/open-scivis-datasets/tooth/tooth_103x94x161_uint8.raw> | optional local dataset | No acknowledgement string supplied in the Open SciVis metadata. |
+| `vis_male` | <http://klacansky.com/open-scivis-datasets/vis_male/vis_male_128x256x256_uint8.raw> | optional local dataset | National Library of Medicine, National Institutes of Health, USA |
 
 ### Save Results
 

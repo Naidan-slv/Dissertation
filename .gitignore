@@ -23,3 +23,7 @@ __pycache__/
 *.png
 *.docx
 output/
+
+# Larger Open SciVis volumes can be installed locally when needed.
+datasets/klacansky/neocortical_layer_1_axons_1464x1033x76_uint8.raw
+datasets/klacansky/pancreas_240x512x512_int16.raw

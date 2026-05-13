@@ -8,6 +8,7 @@
 #   meaning width (x) changes fastest in the file, then height (y), then depth (z).
 #
 # Store `shape_whd` as [width, height, depth] to match the source listing & filenames.
+# Dataset download instructions and acknowledgements are documented in README.md.
 
 version: 1
 default:
