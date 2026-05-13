@@ -1,0 +1,5 @@
+dataset,vertices,status,common_edges,missing_in_python,extra_in_python,interpretation
+nucleon,68921,match,578,0,0,exact reduced superarc endpoint match
+marschner_lobb,68921,match,1505,0,0,exact reduced superarc endpoint match
+fuel,262144,match,343,0,0,exact reduced superarc endpoint match
+neghip,262144,match,2241,0,0,exact reduced superarc endpoint match

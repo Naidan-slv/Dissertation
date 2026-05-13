@@ -1,0 +1,2 @@
+dataset,isovalue,tetrahedralisation,surface_points,triangles,active_contour_tree_arcs,component_mapping,payload_file,dot_file
+fuel,127.5,Freudenthal / marching tetrahedra,3626,7192,5,interval-only,output/dissertation_assets/viewer/fuel_viewer_payload.json,output/dissertation_assets/viewer/fuel_contour_tree.pdf

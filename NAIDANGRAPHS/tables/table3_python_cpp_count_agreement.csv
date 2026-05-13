@@ -1,0 +1,16 @@
+dataset,cxx_dataset,vertices,cxx_supernodes,python_supernodes,node_delta_python_minus_cxx,cxx_superarcs,python_superarcs,arc_delta_python_minus_cxx,match,python_verified
+nucleon,nucleon,68921,579,579,0,578,578,0,yes,True
+marschner_lobb,marschner_lobb,68921,1506,1506,0,1505,1505,0,yes,True
+silicium,silicium,113288,458,458,0,457,457,0,yes,True
+fuel,fuel,262144,344,344,0,343,343,0,yes,True
+neghip,neghip,262144,2242,2242,0,2241,2241,0,yes,True
+hydrogen_atom,hydrogen,2097152,13593,13593,0,13592,13592,0,yes,True
+shockwave,shockwave,2097152,1133,1133,0,1132,1132,0,yes,True
+lobster,lobster,5461344,323349,323349,0,323348,323348,0,yes,True
+engine,engine,8388608,467702,467702,0,467701,467701,0,yes,True
+statue_leg,statue_leg,10814133,353877,353877,0,353876,353876,0,yes,True
+boston_teapot,boston_teapot,11665408,93330,93330,0,93329,93329,0,yes,True
+aneurism,aneurysm,16777216,54197,54197,0,54196,54196,0,yes,True
+bonsai,bonsai,16777216,179627,179627,0,179626,179626,0,yes,True
+foot,foot,16777216,719091,719091,0,719090,719090,0,yes,True
+skull,skull,16777216,1710477,1710477,0,1710476,1710476,0,yes,True

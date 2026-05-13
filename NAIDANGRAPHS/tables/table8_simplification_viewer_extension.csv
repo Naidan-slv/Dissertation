@@ -1,0 +1,2 @@
+dataset,original_superarcs,simplification_mode,threshold,simplified_superarcs,reduction_percent,collapse_records,active_edges_at_isovalue,simplification_time
+fuel,343,height,5.0,53,84.55,290,5,not timed separately in current asset export

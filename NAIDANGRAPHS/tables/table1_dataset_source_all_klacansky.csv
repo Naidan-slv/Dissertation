@@ -1,0 +1,29 @@
+dataset,category_type,python_dimensions_whd,cxx_dimensions_if_used,vertices,scalar_type,source_provenance,used_in_cpp,used_in_python,cpp_converted_text_present,conversion_note,axis_order_note
+aneurism,CT,256x256x256,256x256x256,16777216,uint8,https://klacansky.com/open-scivis-datasets/,yes,yes,yes,uint8 direct/safe,cubic; axis order does not change dimensions
+blunt_fin,Simulation,256x128x64,,2097152,uint8,https://klacansky.com/open-scivis-datasets/,no,yes,no,uint8 direct/safe,non-cubic; axis order must be stated
+bonsai,CT,256x256x256,256x256x256,16777216,uint8,https://klacansky.com/open-scivis-datasets/,yes,yes,yes,uint8 direct/safe,cubic; axis order does not change dimensions
+boston_teapot,CT,256x256x178,256x256x178,11665408,uint8,https://klacansky.com/open-scivis-datasets/,yes,yes,yes,uint8 direct/safe,non-cubic; axis order must be stated
+carp,CT,256x256x512,,33554432,uint16,https://klacansky.com/open-scivis-datasets/,no,yes,no,uint16; not part of uint8 C++ converted set,non-cubic; axis order must be stated
+csafe_heptane,Simulation,302x302x302,,27543608,uint8,https://klacansky.com/open-scivis-datasets/,no,yes,no,uint8 direct/safe,cubic; axis order does not change dimensions
+engine,CT,256x256x128,256x256x128,8388608,uint8,https://klacansky.com/open-scivis-datasets/,yes,yes,yes,uint8 direct/safe,non-cubic; axis order must be stated
+foot,CT,256x256x256,256x256x256,16777216,uint8,https://klacansky.com/open-scivis-datasets/,yes,yes,yes,uint8 direct/safe,cubic; axis order does not change dimensions
+frog,MRI,256x256x44,,2883584,uint8,https://klacansky.com/open-scivis-datasets/,no,yes,no,uint8 direct/safe,non-cubic; axis order must be stated
+fuel,Simulation,64x64x64,64x64x64,262144,uint8,https://klacansky.com/open-scivis-datasets/,yes,yes,yes,uint8 direct/safe,cubic; axis order does not change dimensions
+hydrogen_atom,Simulation,128x128x128,128x128x128,2097152,uint8,https://klacansky.com/open-scivis-datasets/,yes,yes,yes,uint8 direct/safe,cubic; axis order does not change dimensions
+lobster,CT,301x324x56,324x301x56,5461344,uint8,https://klacansky.com/open-scivis-datasets/,yes,yes,yes,uint8 direct/safe,non-cubic; axis order must be stated
+marschner_lobb,Synthetic,41x41x41,41x41x41,68921,uint8,https://klacansky.com/open-scivis-datasets/,yes,yes,yes,uint8 direct/safe,cubic; axis order does not change dimensions
+mri_ventricles,MRI,256x256x124,,8126464,uint8,https://klacansky.com/open-scivis-datasets/,no,yes,no,uint8 direct/safe,non-cubic; axis order must be stated
+mri_woman,MRI,256x256x109,,7143424,uint16,https://klacansky.com/open-scivis-datasets/,no,yes,no,uint16; not part of uint8 C++ converted set,non-cubic; axis order must be stated
+mrt_angio,MRI,416x512x112,,23855104,uint16,https://klacansky.com/open-scivis-datasets/,no,yes,no,uint16; not part of uint8 C++ converted set,non-cubic; axis order must be stated
+neghip,Simulation,64x64x64,64x64x64,262144,uint8,https://klacansky.com/open-scivis-datasets/,yes,yes,yes,uint8 direct/safe,cubic; axis order does not change dimensions
+neocortical_layer_1_axons,Microscope,1464x1033x76,,114935712,uint8,https://klacansky.com/open-scivis-datasets/,no,yes,no,uint8 direct/safe,non-cubic; axis order must be stated
+nucleon,Synthetic,41x41x41,41x41x41,68921,uint8,https://klacansky.com/open-scivis-datasets/,yes,yes,yes,uint8 direct/safe,cubic; axis order does not change dimensions
+pancreas,CT,240x512x512,,62914560,int16,https://klacansky.com/open-scivis-datasets/,no,yes,no,int16; not part of uint8 C++ converted set,non-cubic; axis order must be stated
+shockwave,Simulation,64x64x512,64x64x512,2097152,uint8,https://klacansky.com/open-scivis-datasets/,yes,yes,yes,uint8 direct/safe,non-cubic; axis order must be stated
+silicium,Simulation,98x34x34,34x98x34,113288,uint8,https://klacansky.com/open-scivis-datasets/,yes,yes,yes,uint8 direct/safe,non-cubic; axis order must be stated
+skull,CT,256x256x256,256x256x256,16777216,uint8,https://klacansky.com/open-scivis-datasets/,yes,yes,yes,uint8 direct/safe,cubic; axis order does not change dimensions
+statue_leg,CT,341x341x93,341x341x93,10814133,uint8,https://klacansky.com/open-scivis-datasets/,yes,yes,yes,uint8 direct/safe,non-cubic; axis order must be stated
+stent,CT,512x512x174,,45613056,uint16,https://klacansky.com/open-scivis-datasets/,no,yes,no,uint16; not part of uint8 C++ converted set,non-cubic; axis order must be stated
+tacc_turbulence,Simulation,256x256x256,,16777216,float32,https://klacansky.com/open-scivis-datasets/,no,yes,no,float32; not part of uint8 C++ converted set,cubic; axis order does not change dimensions
+tooth,CT,103x94x161,,1558802,uint8,https://klacansky.com/open-scivis-datasets/,no,yes,no,uint8 direct/safe,non-cubic; axis order must be stated
+vis_male,CT,128x256x256,,8388608,uint8,https://klacansky.com/open-scivis-datasets/,no,yes,no,uint8 direct/safe,non-cubic; axis order must be stated
