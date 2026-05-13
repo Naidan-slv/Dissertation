@@ -239,6 +239,8 @@ pip install -r requirements.txt
 | `python scripts/export_viewer_assets.py fuel --threshold 5` | Export viewer JSON, manifest, and DOT graph assets |
 | `python scripts/export_viewer_assets.py fuel --screenshot` | Also request an optional PyVista screenshot |
 | `python scripts/klacansky_viewer.py fuel --isovalue 42` | Open the optional PyVista viewer for a Klacansky dataset |
+| `python scripts/klacansky_viewer.py --file volumes/demo.raw --shape 128 128 64 --dtype uint16` | Open the optional PyVista viewer for an arbitrary raw volume |
+| `python scripts/export_viewer_assets.py --file volumes/demo.raw --shape 128 128 64 --dtype uint16 --output-dir output/viewer` | Export viewer assets for an arbitrary raw volume |
 | `python -m src.benchmarks.timing_plots` | Generate serial Python timing JSON/CSV files and plots under `output/` |
 | `python scripts/ttk_comparison.py --project-nodes 4 --project-arcs 3 --ttk-summary ttk.txt` | Compare project counts with a saved TTK-style summary |
 
@@ -472,6 +474,90 @@ tree inspection, with active arcs highlighted when an isovalue is supplied.
 
 The screenshot path is optional because PyVista/VTK is not a core dependency.
 
+### What the 3D visualisation path supports
+
+There are three practical outputs in this repository:
+
+1. **Interactive 3D isosurface viewing** via `scripts/klacansky_viewer.py`.
+2. **Static screenshot export** via `scripts/export_viewer_assets.py --screenshot`.
+3. **Non-GUI viewer payload export** (JSON + DOT) for later inspection or custom front ends.
+
+The 3D rendered object is the project's own marching-tetrahedra isosurface.
+PyVista is only the optional renderer.
+
+### Named datasets vs arbitrary raw files
+
+The viewer/export scripts now support both:
+
+- named datasets from `src/input/datasets.yaml`
+- arbitrary `.raw` files when you supply shape and dtype explicitly
+
+For arbitrary raw files, the scripts need:
+
+- `--file path/to/data.raw`
+- `--shape W H D`
+- optional `--dtype` (default `uint8`)
+
+The shape order is:
+
+- `W = width = x dimension`
+- `H = height = y dimension`
+- `D = depth = z dimension`
+
+So:
+
+```text
+--shape W H D  ==  --shape X Y Z
+```
+
+The raw file is interpreted in C-style order:
+
+```text
+array[z][y][x]
+```
+
+meaning:
+
+- `x` changes fastest in the file,
+- then `y`,
+- then `z`.
+
+Example viewer command:
+
+```bash
+python scripts/klacansky_viewer.py \
+   --file datasets/my_volume.raw \
+   --shape 128 128 64 \
+   --dtype uint16 \
+   --isovalue 42
+```
+
+Example asset export command:
+
+```bash
+python scripts/export_viewer_assets.py \
+   --file datasets/my_volume.raw \
+   --shape 128 128 64 \
+   --dtype uint16 \
+   --output-dir output/viewer
+```
+
+The exported payload uses the raw file stem as `dataset_name`.
+
+Example interpretation:
+
+```text
+--shape 128 128 64
+```
+
+means:
+
+- width/x = 128
+- height/y = 128
+- depth/z = 64
+
+This is a volume with 128 samples along x, 128 along y, and 64 along z.
+
 The current viewer marks arcs by scalar interval only:
 
 ```
@@ -480,6 +566,18 @@ arc is active if low_value <= isovalue <= high_value
 
 It does not yet assign every rendered triangle component to a specific contour
 tree branch.
+
+### Practical limitations users should expect
+
+The viewer path is general, but not every dataset is equally convenient to view.
+
+- **Memory use:** the workflow loads the full volume, builds a `GridMesh3D`, computes the reduced contour tree, and extracts an isosurface. Large volumes can therefore be expensive before rendering even begins.
+- **Interactive performance:** very large volumes may be slow to open or update when the slider moves. Start with `fuel`, `nucleon`, `marschner_lobb`, or `neghip` first.
+- **Raw-file metadata is manual:** for arbitrary `.raw` files the code cannot infer width, height, depth, dtype, or semantic axis meaning. You must provide correct shape/dtype yourself.
+- **No arbitrary file manifest metadata:** named datasets carry category/source metadata in `datasets.yaml`; arbitrary files do not.
+- **Viewer linkage is interval only:** an arc is marked active if the isovalue lies within that arc's scalar interval. This is not exact connected-component-to-superarc tracking.
+- **Simplification is tree context only:** simplification changes the stored tree payload, not the extracted triangle mesh.
+- **PyVista is optional:** JSON/DOT asset export works without PyVista, but interactive viewing and screenshots require `requirements-viewer.txt`.
 
 ---
 

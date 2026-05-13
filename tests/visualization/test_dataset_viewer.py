@@ -9,6 +9,7 @@ from src.visualization.dataset_viewer import (
     build_grid_viewer_inputs,
     build_klacansky_viewer,
     build_klacansky_viewer_inputs,
+    build_raw_file_viewer_inputs,
 )
 from src.visualization.interactive_viewer import current_viewer_payload
 
@@ -92,6 +93,33 @@ def test_klacansky_viewer_inputs_use_named_dataset_loader():
 
     assert calls == [("fuel", False)]
     assert inputs["dataset_name"] == "fuel"
+    assert inputs["initial_isovalue"] == 0.5
+
+
+def test_raw_file_viewer_inputs_use_single_file_loader(monkeypatch):
+    calls = []
+
+    def fake_single_file_loader(file_path, shape_whd, dtype):
+        calls.append((file_path, shape_whd, dtype))
+        data = np.zeros(8)
+        data[1] = 1.0
+        return data, 2, 2, 2
+
+    monkeypatch.setattr(
+        "src.visualization.dataset_viewer.load_raw_volume_single_file",
+        fake_single_file_loader,
+    )
+
+    inputs = build_raw_file_viewer_inputs(
+        "volumes/demo.raw",
+        (2, 2, 2),
+        dtype="uint16",
+        freudenthal=False,
+        contour_tree_fn=tiny_tree,
+    )
+
+    assert calls == [("volumes/demo.raw", (2, 2, 2), "uint16")]
+    assert inputs["dataset_name"] == "volumes/demo.raw"
     assert inputs["initial_isovalue"] == 0.5
 
 

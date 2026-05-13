@@ -54,6 +54,50 @@ You can pass another dataset key from `src/input/datasets.yaml`:
 python scripts/klacansky_viewer.py nucleon --isovalue 42
 ```
 
+You can also view an arbitrary raw file by supplying shape and dtype manually:
+
+The shape order is always:
+
+```text
+--shape W H D
+```
+
+where:
+
+- `W = width = x`
+- `H = height = y`
+- `D = depth = z`
+
+The raw stream is interpreted as:
+
+```text
+array[z][y][x]
+```
+
+so `x` varies fastest in the file, then `y`, then `z`.
+
+```bash
+python scripts/klacansky_viewer.py \
+	--file datasets/my_volume.raw \
+	--shape 128 128 64 \
+	--dtype uint16 \
+	--isovalue 42
+```
+
+For arbitrary raw files, the script uses the file stem as the viewer dataset label.
+
+Example:
+
+```text
+--shape 256 256 128
+```
+
+means a volume with:
+
+- `x = 256`
+- `y = 256`
+- `z = 128`
+
 For large datasets, contour-tree computation can still be slow. Start with
 `fuel`, `nucleon`, `marschner_lobb`, or another small volume first.
 
@@ -63,6 +107,16 @@ For dissertation evidence or debugging, export the non-GUI asset bundle:
 
 ```bash
 python scripts/export_viewer_assets.py fuel --threshold 5 --output-dir output/viewer
+```
+
+Arbitrary raw files are also supported here:
+
+```bash
+python scripts/export_viewer_assets.py \
+	--file datasets/my_volume.raw \
+	--shape 128 128 64 \
+	--dtype uint16 \
+	--output-dir output/viewer
 ```
 
 This writes:
@@ -79,6 +133,13 @@ python scripts/export_viewer_assets.py fuel --threshold 5 --screenshot
 
 If PyVista or off-screen rendering is unavailable, rerun without `--screenshot`.
 The JSON and DOT assets do not require PyVista.
+
+## Practical limits
+
+- The code can visualise any volume that can be loaded into `GridMesh3D`, but interactive viewing becomes less practical as dataset size grows.
+- The viewer path computes both the contour tree and the isosurface before the GUI opens, so startup time can be significant on large datasets.
+- For arbitrary `.raw` files, the repository cannot infer shape, dtype, spacing, provenance, or semantic axis order. Those are user responsibilities.
+- The current renderer uses the project's marching-tetrahedra geometry; PyVista only displays that payload.
 
 ## Current limitation
 

@@ -8,6 +8,7 @@ from scripts.export_viewer_assets import (
     asset_paths,
     build_parser,
     export_viewer_assets,
+    export_raw_file_viewer_assets,
     main,
 )
 from src.meshes.grid_mesh_3d import GridMesh3D
@@ -27,6 +28,9 @@ def test_parser_defaults_to_fuel_export():
     args = build_parser().parse_args([])
 
     assert args.dataset == "fuel"
+    assert args.file is None
+    assert args.shape is None
+    assert args.dtype == "uint8"
     assert args.isovalue is None
     assert args.threshold is None
     assert args.output_dir == "output/viewer"
@@ -164,6 +168,36 @@ def test_export_viewer_assets_uses_midpoint_isovalue_by_default(tmp_path):
     assert payload["isovalue"] == 0.5
 
 
+def test_export_raw_file_viewer_assets_uses_single_file_loader(monkeypatch, tmp_path):
+    calls = []
+
+    def fake_single_file_loader(file_path, shape_whd, dtype):
+        calls.append((file_path, shape_whd, dtype))
+        data = np.zeros(8)
+        data[1] = 1.0
+        return data, 2, 2, 2
+
+    monkeypatch.setattr(
+        "scripts.export_viewer_assets.load_raw_volume_single_file",
+        fake_single_file_loader,
+    )
+
+    result = export_raw_file_viewer_assets(
+        "volumes/demo.raw",
+        (2, 2, 2),
+        dtype="uint16",
+        isovalue=0.5,
+        output_dir=tmp_path,
+        contour_tree_fn=tiny_tree,
+        command=["export", "--file", "volumes/demo.raw"],
+    )
+
+    assert calls == [("volumes/demo.raw", (2, 2, 2), "uint16")]
+    assert result["viewer_payload"].name == "demo_viewer_payload.json"
+    payload = json.loads(result["viewer_payload"].read_text())
+    assert payload["dataset_name"] == "demo"
+
+
 def test_main_passes_cli_options_to_exporter(monkeypatch):
     calls = []
 
@@ -216,3 +250,50 @@ def test_main_passes_screenshot_option_to_exporter(monkeypatch):
         "fuel",
         "--screenshot",
     ]
+
+
+def test_main_passes_raw_file_options_to_exporter(monkeypatch):
+    calls = []
+
+    def fake_export(**kwargs):
+        calls.append(kwargs)
+        return {"viewer_payload": "payload.json", "manifest": "manifest.json"}
+
+    monkeypatch.setattr("scripts.export_viewer_assets.export_raw_file_viewer_assets", fake_export)
+
+    main(["--file", "demo.raw", "--shape", "2", "2", "2", "--dtype", "uint16", "--output-dir", "out"])
+
+    assert calls == [
+        {
+            "file_path": "demo.raw",
+            "shape_whd": (2, 2, 2),
+            "dtype": "uint16",
+            "isovalue": None,
+            "threshold": None,
+            "output_dir": "out",
+            "freudenthal": True,
+            "screenshot": False,
+            "command": [
+                "scripts/export_viewer_assets.py",
+                "--file",
+                "demo.raw",
+                "--shape",
+                "2",
+                "2",
+                "2",
+                "--dtype",
+                "uint16",
+                "--output-dir",
+                "out",
+            ],
+        }
+    ]
+
+
+def test_main_requires_shape_for_raw_file_export():
+    try:
+        main(["--file", "demo.raw"])
+    except SystemExit as exc:
+        assert "--shape W H D is required" in str(exc)
+    else:
+        raise AssertionError("expected --shape requirement for raw file export")

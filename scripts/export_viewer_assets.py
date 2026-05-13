@@ -11,7 +11,8 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.contour_tree_algo.final_contour_tree import compute_unaugmented_contour_tree
-from src.input.ingest import load_raw_dataset
+from src.input.ingest import load_raw_dataset, load_raw_volume_single_file
+from src.meshes.grid_mesh_3d import GridMesh3D
 from src.visualization.dot_export import ct_to_dot, save_dot
 from src.visualization.pyvista_adapter import save_isosurface_screenshot
 from src.visualization.viewer_payload import build_viewer_payload
@@ -46,6 +47,9 @@ def build_parser():
         description="Export repeatable interactive-viewer JSON assets."
     )
     parser.add_argument("dataset", nargs="?", default="fuel")
+    parser.add_argument("--file", "-f", type=str, help="Path to a .raw file outside datasets.yaml")
+    parser.add_argument("--shape", "-s", type=int, nargs=3, metavar=("W", "H", "D"), help="Dimensions for --file input")
+    parser.add_argument("--dtype", "-d", default="uint8", help="NumPy dtype for --file input (default: uint8)")
     parser.add_argument("--isovalue", type=float, default=None)
     parser.add_argument("--threshold", type=float, default=None)
     parser.add_argument("--output-dir", default="output/viewer")
@@ -176,10 +180,97 @@ def export_viewer_assets(
     return result
 
 
+def export_raw_file_viewer_assets(
+    file_path,
+    shape_whd,
+    dtype="uint8",
+    isovalue=None,
+    threshold=None,
+    output_dir="output/viewer",
+    freudenthal=True,
+    screenshot=False,
+    screenshot_fn=save_isosurface_screenshot,
+    contour_tree_fn=compute_unaugmented_contour_tree,
+    command=None,
+):
+    """Build and write viewer assets for an arbitrary raw file."""
+    data, w, h, d = load_raw_volume_single_file(file_path, shape_whd, dtype)
+    mesh = GridMesh3D(width=w, height=h, depth=d, data=data, freudenthal=freudenthal)
+    dataset_name = Path(file_path).stem
+
+    supernodes, superarcs = contour_tree_fn(mesh)
+
+    if isovalue is None:
+        isovalue = _default_isovalue(mesh)
+
+    simplification = None
+    if threshold is not None:
+        simplification = {"threshold": float(threshold)}
+
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    payload_path, manifest_path, dot_path = asset_paths(output_dir, dataset_name)
+
+    payload = build_viewer_payload(
+        mesh=mesh,
+        supernodes=list(supernodes),
+        superarcs=list(superarcs),
+        isovalue=float(isovalue),
+        dataset_name=dataset_name,
+        simplification=simplification,
+    )
+    dot_text = ct_to_dot(
+        list(supernodes),
+        list(superarcs),
+        mesh.value,
+        isovalue=float(isovalue),
+    )
+    screenshot_output_path = None
+    if screenshot:
+        screenshot_output_path = screenshot_path(output_dir, dataset_name)
+        screenshot_fn(payload["isosurface"], screenshot_output_path)
+
+    manifest = build_asset_manifest(
+        dataset_name=dataset_name,
+        isovalue=isovalue,
+        threshold=threshold,
+        payload_path=payload_path,
+        manifest_path=manifest_path,
+        command=command,
+        dot_path=dot_path,
+        screenshot_path=screenshot_output_path,
+    )
+
+    _write_json(payload_path, payload)
+    save_dot(dot_text, str(dot_path))
+    _write_json(manifest_path, manifest)
+
+    result = {"viewer_payload": payload_path, "manifest": manifest_path, "dot_graph": dot_path}
+    if screenshot_output_path is not None:
+        result["screenshot"] = screenshot_output_path
+    return result
+
+
 def main(argv=None):
     """CLI entry point."""
     raw_args = list(sys.argv[1:] if argv is None else argv)
     args = build_parser().parse_args(raw_args)
+
+    if args.file:
+        if args.shape is None:
+            raise SystemExit("--shape W H D is required when using --file")
+        return export_raw_file_viewer_assets(
+            file_path=args.file,
+            shape_whd=tuple(args.shape),
+            dtype=args.dtype,
+            isovalue=args.isovalue,
+            threshold=args.threshold,
+            output_dir=args.output_dir,
+            freudenthal=not args.no_freudenthal,
+            screenshot=args.screenshot,
+            command=["scripts/export_viewer_assets.py", *raw_args],
+        )
+
     return export_viewer_assets(
         dataset_name=args.dataset,
         isovalue=args.isovalue,
