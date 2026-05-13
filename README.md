@@ -253,7 +253,7 @@ pip install -r requirements-viewer.txt
 
 Generated evidence files are ignored by git. Regenerate them with the scripts
 above, or copy selected final figures into a separate dissertation-assets folder
-if they must be archived outside the source history.
+if they must be archived separately.
 
 ### Dataset files and attribution
 
